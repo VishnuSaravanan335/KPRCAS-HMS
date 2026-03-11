@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPR HUB – Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">K</div>
+      <div class="logo-text">KPR<span>HUB</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-info" id="userInfo"></div>
+      <button class="btn-logout" onclick="logout()">↩ Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-right" style="display:flex;align-items:center;gap:12px">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="lock-badge" id="lockBadge" style="display:none">🔒 Portal Locked</div>
+      </div>
+    </header>
+
+    <div class="portal-locked-screen" id="portalLockedScreen" style="display:none">
+      <div class="locked-content">
+        <div class="locked-icon">🔒</div>
+        <h2>Portal Locked</h2>
+        <p>The administrator has temporarily locked the portal. Please check back later or contact the admin.</p>
+      </div>
+    </div>
+
+    <main class="page-content" id="pageContent"></main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+  <div class="modal" id="mainModal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>

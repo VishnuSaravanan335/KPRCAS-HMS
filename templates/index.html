@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPR HUB – Login</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --accent: #2563eb;
+      --accent2: #3b82f6;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f0f4fa;
+      --card: #ffffff;
+      --sidebar: #1e2d4e;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Subtle bg pattern */
+    body {
+      background: #0f172a url('https://share.google/images/FAw6iO9QxPMFlB2zJ') center/cover no-repeat fixed !important;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(30, 45, 78, 0.75) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .login-wrap {
+      display: flex;
+      width: 920px;
+      max-width: 96vw;
+      min-height: 580px;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border);
+      animation: fadeUp 0.5s ease both;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Left — brand */
+    .brand-panel {
+      flex: 1.1;
+      background: var(--sidebar);
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent);
+    }
+
+    .brand-panel::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -40px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.1), transparent);
+    }
+
+    .brand-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 16px;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 28px rgba(59, 130, 246, 0.45);
+      letter-spacing: -1px;
+    }
+
+    .brand-title {
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1.05;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .brand-title span {
+      color: #93c5fd;
+    }
+
+    .brand-sub {
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    .role-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 30px;
+    }
+
+    .chip {
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid;
+      letter-spacing: 0.02em;
+    }
+
+    .chip-admin {
+      color: #fcd34d;
+      border-color: rgba(252, 211, 77, 0.35);
+      background: rgba(252, 211, 77, 0.1);
+    }
+
+    .chip-booker {
+      color: #6ee7b7;
+      border-color: rgba(110, 231, 183, 0.35);
+      background: rgba(110, 231, 183, 0.1);
+    }
+
+    .chip-it {
+      color: #93c5fd;
+      border-color: rgba(147, 197, 253, 0.35);
+      background: rgba(147, 197, 253, 0.1);
+    }
+
+    .chip-reception {
+      color: #f9a8d4;
+      border-color: rgba(249, 168, 212, 0.35);
+      background: rgba(249, 168, 212, 0.1);
+    }
+
+    .chip-principal {
+      color: #c4b5fd;
+      border-color: rgba(196, 181, 253, 0.35);
+      background: rgba(196, 181, 253, 0.1);
+    }
+
+    .brand-footer {
+      font-size: 0.77rem;
+      color: rgba(255, 255, 255, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-footer strong {
+      color: #93c5fd;
+    }
+
+    /* Right — form */
+    .form-panel {
+      flex: 1;
+      background: var(--card);
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-heading {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 5px;
+      letter-spacing: -0.5px;
+    }
+
+    .form-sub {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 34px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.94rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      background: #fff;
+    }
+
+    input::placeholder {
+      color: #cbd5e1;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #1d4ed8);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.97rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-msg {
+      background: #fff1f2;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+      padding: 11px 15px;
+      border-radius: 10px;
+      font-size: 0.865rem;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .error-msg.show {
+      display: block;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    .demo-grid {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .demo-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .demo-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .demo-btn {
+      padding: 5px 13px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid;
+      transition: all 0.15s;
+    }
+
+    .demo-btn:hover {
+      transform: scale(1.04);
+      filter: brightness(0.95);
+    }
+
+    .db-admin {
+      color: #92400e;
+      background: #fef3c7;
+      border-color: #fcd34d;
+    }
+
+    .db-booker {
+      color: #065f46;
+      background: #d1fae5;
+      border-color: #6ee7b7;
+    }
+
+    .db-it {
+      color: #1e40af;
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .db-reception {
+      color: #9d174d;
+      background: #fce7f3;
+      border-color: #f9a8d4;
+    }
+
+    .db-principal {
+      color: #5b21b6;
+      background: #ede9fe;
+      border-color: #c4b5fd;
+    }
+
+    @media (max-width: 700px) {
+      .login-wrap {
+        flex-direction: column;
+      }
+
+      .brand-panel {
+        padding: 32px 28px;
+      }
+
+      .form-panel {
+        padding: 32px 28px;
+      }
+
+      .role-chips {
+        display: none;
+      }
+
+      .form-heading {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-wrap">
+    <div class="brand-panel">
+      <div class="brand-inner">
+        <div class="logo-mark">K</div>
+        <div class="brand-title">KPR<br><span>HUB</span></div>
+        <div class="brand-sub">Event &amp; Inventory Management<br>System for KPRCAS Institution</div>
+        <div class="role-chips">
+          <span class="chip chip-admin">Admin</span>
+          <span class="chip chip-booker">Booker</span>
+          <span class="chip chip-it">IT Support</span>
+          <span class="chip chip-reception">Reception</span>
+          <span class="chip chip-principal">Principal</span>
+        </div>
+      </div>
+      <div class="brand-footer">Powered by <strong>KPRCAS</strong> &nbsp;·&nbsp; v2.0</div>
+    </div>
+
+    <div class="form-panel">
+      <div class="form-heading">Welcome back 👋</div>
+      <div class="form-sub">Sign in to access your dashboard</div>
+      <div class="error-msg" id="errMsg"></div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="demo-grid">
+        <div class="demo-label">Quick Login</div>
+        <div class="demo-buttons">
+          <button class="demo-btn db-admin" onclick="quickLogin('admin','admin123')">Admin</button>
+          <button class="demo-btn db-booker" onclick="quickLogin('booker','booker123')">Booker</button>
+          <button class="demo-btn db-it" onclick="quickLogin('it','it123')">IT Support</button>
+          <button class="demo-btn db-reception" onclick="quickLogin('reception','reception123')">Reception</button>
+          <button class="demo-btn db-principal" onclick="quickLogin('principal','principal123')">Principal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function quickLogin(u, p) { document.getElementById('username').value = u; document.getElementById('password').value = p; doLogin(); }
+    async function doLogin() {
+      const btn = document.getElementById('loginBtn'), errMsg = document.getElementById('errMsg');
+      const username = document.getElementById('username').value.trim(), password = document.getElementById('password').value;
+      if (!username || !password) { showError('Please enter username and password'); return; }
+      btn.disabled = true; btn.textContent = 'Signing in…'; errMsg.classList.remove('show');
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Login failed'); return; }
+        window.location.href = '/dashboard';
+      } catch (e) { showError('Connection error. Is the server running?'); }
+      finally { btn.disabled = false; btn.textContent = 'Sign In →'; }
+    }
+    function showError(msg) { const el = document.getElementById('errMsg'); el.textContent = msg; el.classList.add('show'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+</body>
+
+</html>

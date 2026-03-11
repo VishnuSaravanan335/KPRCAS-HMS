@@ -1,0 +1,349 @@
+{
+  "settings": {
+    "portal_locked": false
+  },
+  "users": [
+    {
+      "id": "u1",
+      "name": "Admin User",
+      "username": "admin",
+      "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin"
+    },
+    {
+      "id": "u2",
+      "name": "Dr. Priya",
+      "username": "booker",
+      "password": "a38ebae2dde5fc2089e3b9ddb2ec60f329bb90aefd44213dbcccdc50e94a1fe1",
+      "role": "booker"
+    },
+    {
+      "id": "u3",
+      "name": "Rajan (IT)",
+      "username": "it",
+      "password": "37a3406d73c0f39e73a19006e2c687863760a65f10d97147d490852280a4b621",
+      "role": "it"
+    },
+    {
+      "id": "u4",
+      "name": "Meena (Reception)",
+      "username": "reception",
+      "password": "5145dba3b6bda2d610d2c5c435a1c2481eefd3146b6a7e004ad73f794386e031",
+      "role": "reception"
+    },
+    {
+      "id": "u5",
+      "name": "Principal Kumar",
+      "username": "principal",
+      "password": "3549f22fb8622a6d216ef2dcd592e04ed1f1e604cef032d7e5c425e8e72a878e",
+      "role": "principal"
+    }
+  ],
+  "halls": [
+    {
+      "id": "h_af101",
+      "name": "AF 101",
+      "capacity": 60,
+      "type": "Classroom",
+      "locked": false,
+      "image": "https://blind-jade-follsdsq9o.edgeone.app/Gemini_Generated_Image_39822p39822p3982.png"
+    },
+    {
+      "id": "h_bf101",
+      "name": "BF 101",
+      "capacity": 60,
+      "type": "Classroom",
+      "locked": false,
+      "image": "https://blind-jade-follsdsq9o.edgeone.app/Gemini_Generated_Image_39822p39822p3982.png"
+    },
+    {
+      "id": "h_lab1",
+      "name": "Lab 1",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab2",
+      "name": "Lab 2",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab3",
+      "name": "Lab 3",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab4",
+      "name": "Lab 4",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab6",
+      "name": "Lab 6",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab7",
+      "name": "Lab 7",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab8",
+      "name": "Lab 8",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_lab9",
+      "name": "Lab 9",
+      "capacity": 50,
+      "type": "Lab",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+    },
+    {
+      "id": "h_sem1",
+      "name": "Seminar Hall 1",
+      "capacity": 150,
+      "type": "Seminar",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031202621-88ba1c54-5f16-4dbc-a880-b333ba18d35e.jpg"
+    },
+    {
+      "id": "h_sem2",
+      "name": "Seminar Hall 2",
+      "capacity": 200,
+      "type": "Seminar",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031202621-88ba1c54-5f16-4dbc-a880-b333ba18d35e.jpg"
+    },
+    {
+      "id": "h_aud1",
+      "name": "Auditorium 1",
+      "capacity": 800,
+      "type": "Auditorium",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031158304-90488c29-3ede-4e04-b854-785134193c29.jpg"
+    },
+    {
+      "id": "h_aud2",
+      "name": "Auditorium 2",
+      "capacity": 800,
+      "type": "Auditorium",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031158304-90488c29-3ede-4e04-b854-785134193c29.jpg"
+    },
+    {
+      "id": "h_oat",
+      "name": "Open Air Theatre (OAT)",
+      "capacity": 1000,
+      "type": "Open Air",
+      "locked": false,
+      "image": "https://image2url.com/r2/default/images/1773031158304-90488c29-3ede-4e04-b854-785134193c29.jpg"
+    }
+  ],
+  "inventory": [
+    {
+      "id": "it01",
+      "name": "Hand Mic",
+      "dept": "it",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "it02",
+      "name": "Podium Mic",
+      "dept": "it",
+      "stock_qty": 5,
+      "in_use": 0
+    },
+    {
+      "id": "it03",
+      "name": "Speakers",
+      "dept": "it",
+      "stock_qty": 8,
+      "in_use": 0
+    },
+    {
+      "id": "it04",
+      "name": "Laptop",
+      "dept": "it",
+      "stock_qty": 20,
+      "in_use": 0
+    },
+    {
+      "id": "it05",
+      "name": "Projector",
+      "dept": "it",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "it06",
+      "name": "Presenter",
+      "dept": "it",
+      "stock_qty": 8,
+      "in_use": 0
+    },
+    {
+      "id": "it07",
+      "name": "Podium",
+      "dept": "it",
+      "stock_qty": 4,
+      "in_use": 0
+    },
+    {
+      "id": "it08",
+      "name": "Photo Camera",
+      "dept": "it",
+      "stock_qty": 3,
+      "in_use": 0
+    },
+    {
+      "id": "it09",
+      "name": "Video Camera",
+      "dept": "it",
+      "stock_qty": 3,
+      "in_use": 0
+    },
+    {
+      "id": "it10",
+      "name": "White Board",
+      "dept": "it",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "rc01",
+      "name": "Lamp",
+      "dept": "reception",
+      "stock_qty": 20,
+      "in_use": 0
+    },
+    {
+      "id": "rc02",
+      "name": "Paneer Sprinkler",
+      "dept": "reception",
+      "stock_qty": 15,
+      "in_use": 0
+    },
+    {
+      "id": "rc03",
+      "name": "Tray",
+      "dept": "reception",
+      "stock_qty": 20,
+      "in_use": 0
+    },
+    {
+      "id": "rc04",
+      "name": "Silver Bowls",
+      "dept": "reception",
+      "stock_qty": 30,
+      "in_use": 0
+    },
+    {
+      "id": "rc05",
+      "name": "Table Cloth",
+      "dept": "reception",
+      "stock_qty": 25,
+      "in_use": 0
+    },
+    {
+      "id": "rc06",
+      "name": "Plug Card",
+      "dept": "reception",
+      "stock_qty": 15,
+      "in_use": 0
+    },
+    {
+      "id": "rc07",
+      "name": "L-Folder",
+      "dept": "reception",
+      "stock_qty": 50,
+      "in_use": 0
+    },
+    {
+      "id": "rc08",
+      "name": "Water Bottle",
+      "dept": "reception",
+      "stock_qty": 200,
+      "in_use": 0
+    },
+    {
+      "id": "rc09",
+      "name": "Hall Chairs",
+      "dept": "reception",
+      "stock_qty": 500,
+      "in_use": 0
+    },
+    {
+      "id": "rc10",
+      "name": "Stage Table",
+      "dept": "reception",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "rc11",
+      "name": "Stage Chair",
+      "dept": "reception",
+      "stock_qty": 30,
+      "in_use": 0
+    },
+    {
+      "id": "rc12",
+      "name": "Registration Table",
+      "dept": "reception",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "rc13",
+      "name": "Registration Chair",
+      "dept": "reception",
+      "stock_qty": 20,
+      "in_use": 0
+    },
+    {
+      "id": "rc14",
+      "name": "Reception Table",
+      "dept": "reception",
+      "stock_qty": 8,
+      "in_use": 0
+    },
+    {
+      "id": "rc15",
+      "name": "Refreshment Table",
+      "dept": "reception",
+      "stock_qty": 8,
+      "in_use": 0
+    },
+    {
+      "id": "rc16",
+      "name": "T-Poy",
+      "dept": "reception",
+      "stock_qty": 15,
+      "in_use": 0
+    }
+  ],
+  "events": []
+}
