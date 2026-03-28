@@ -2,6 +2,46 @@
   "settings": {
     "portal_locked": false
   },
+  "hierarchy": {
+    "Postgraduate Programmes": [
+      "M.Com.",
+      "M.Sc. Data Science"
+    ],
+    "School of Commerce": [
+      "B.Com.",
+      "B.Com. Professional Accounting (PA)",
+      "B.Com. Banking and Insurance (B&I)"
+    ],
+    "School of Computing Science": [
+      "B.Sc. Computer Science (CS)",
+      "B.Sc. Information Technology (IT)",
+      "B.Sc. Computer Technology (CT)",
+      "B.C.A.",
+      "B.Sc. Computer Science with Cyber Security"
+    ],
+    "School of Fashion": [
+      "B.Sc. Costume Design and Fashion (CDF)"
+    ],
+    "School of IT Integrated Commerce": [
+      "B.Com. Computer Applications (CA)",
+      "B.Com. Business Analytics (BA)",
+      "B.Com. E-Commerce (E-Com)",
+      "B.Com. Information Technology (IT)"
+    ],
+    "School of Intelligent Systems & Data Science": [
+      "B.Sc. Computer Science with Data Analytics (CSDA)",
+      "B.Sc. Artificial Intelligence & Machine Learning (AI & ML)",
+      "B.Sc. Computer Science with AI & Data Science",
+      "B.Sc. Data Science (DS)",
+      "B.Sc. Computer Science with Cloud Computing"
+    ],
+    "School of Management": [
+      "B.B.A.",
+      "B.B.A. Logistics",
+      "B.B.A. Computer Applications (CA)",
+      "B.B.A. International Business"
+    ]
+  },
   "users": [
     {
       "id": "u1",
@@ -15,14 +55,16 @@
       "name": "Dr. Priya",
       "username": "booker",
       "password": "a38ebae2dde5fc2089e3b9ddb2ec60f329bb90aefd44213dbcccdc50e94a1fe1",
-      "role": "booker"
+      "role": "booker",
+      "email": ""
     },
     {
       "id": "u3",
       "name": "Rajan (IT)",
       "username": "it",
-      "password": "37a3406d73c0f39e73a19006e2c687863760a65f10d97147d490852280a4b621",
-      "role": "it"
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "role": "it",
+      "email": "edwfgtrhyjk,"
     },
     {
       "id": "u4",
@@ -37,6 +79,29 @@
       "username": "principal",
       "password": "3549f22fb8622a6d216ef2dcd592e04ed1f1e604cef032d7e5c425e8e72a878e",
       "role": "principal"
+    },
+    {
+      "id": "u7344aefd",
+      "name": "User Six",
+      "username": "user6",
+      "password": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "role": "booker"
+    },
+    {
+      "id": "u997dd40f",
+      "name": "vicky",
+      "username": "user7",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "role": "booker",
+      "email": "vickyapjlove@gmail.com"
+    },
+    {
+      "id": "u12c112bd",
+      "name": "naveen",
+      "username": "naveen",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "role": "booker",
+      "email": "naveenrajak784@gmail.com"
     }
   ],
   "halls": [
@@ -45,6 +110,8 @@
       "name": "AF 101",
       "capacity": 60,
       "type": "Classroom",
+      "building": "A-Block",
+      "floor": "1st Floor",
       "locked": false,
       "image": "https://blind-jade-follsdsq9o.edgeone.app/Gemini_Generated_Image_39822p39822p3982.png"
     },
@@ -53,6 +120,8 @@
       "name": "BF 101",
       "capacity": 60,
       "type": "Classroom",
+      "building": "B-Block",
+      "floor": "1st Floor",
       "locked": false,
       "image": "https://blind-jade-follsdsq9o.edgeone.app/Gemini_Generated_Image_39822p39822p3982.png"
     },
@@ -61,22 +130,28 @@
       "name": "Lab 1",
       "capacity": 50,
       "type": "Lab",
+      "building": "Lab-Block",
+      "floor": "Ground Floor",
       "locked": false,
-      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+      "image": "https://image2url.com/r2/default/images/1773031020279-d17e7fac-e3cb-4fdf-9769-e09968434ce3.jpg"
     },
     {
       "id": "h_lab2",
       "name": "Lab 2",
       "capacity": 50,
       "type": "Lab",
+      "building": "Lab-Block",
+      "floor": "Ground Floor",
       "locked": false,
-      "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
+      "image": "https://image2url.com/r2/default/images/1773031020279-d17e7fac-e3cb-4fdf-9769-e09968434ce3.jpg"
     },
     {
       "id": "h_lab3",
       "name": "Lab 3",
       "capacity": 50,
       "type": "Lab",
+      "building": "Lab-Block",
+      "floor": "Ground Floor",
       "locked": false,
       "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
     },
@@ -117,6 +192,8 @@
       "name": "Lab 9",
       "capacity": 50,
       "type": "Lab",
+      "building": "Lab-Block",
+      "floor": "1st Floor",
       "locked": false,
       "image": "https://image2url.com/r2/default/images/1773031110724-b30b93d0-2e62-474a-bfb7-9d9c2598d9fe.jpg"
     },
@@ -125,6 +202,8 @@
       "name": "Seminar Hall 1",
       "capacity": 150,
       "type": "Seminar",
+      "building": "Main-Block",
+      "floor": "Ground Floor",
       "locked": false,
       "image": "https://image2url.com/r2/default/images/1773031202621-88ba1c54-5f16-4dbc-a880-b333ba18d35e.jpg"
     },
@@ -133,6 +212,8 @@
       "name": "Seminar Hall 2",
       "capacity": 200,
       "type": "Seminar",
+      "building": "Main-Block",
+      "floor": "Ground Floor",
       "locked": false,
       "image": "https://image2url.com/r2/default/images/1773031202621-88ba1c54-5f16-4dbc-a880-b333ba18d35e.jpg"
     },
@@ -141,6 +222,8 @@
       "name": "Auditorium 1",
       "capacity": 800,
       "type": "Auditorium",
+      "building": "Grand-Block",
+      "floor": "Ground Floor",
       "locked": false,
       "image": "https://image2url.com/r2/default/images/1773031158304-90488c29-3ede-4e04-b854-785134193c29.jpg"
     },
@@ -166,36 +249,36 @@
       "id": "it01",
       "name": "Hand Mic",
       "dept": "it",
-      "stock_qty": 10,
-      "in_use": 0
+      "stock_qty": 50,
+      "in_use": 26
     },
     {
       "id": "it02",
       "name": "Podium Mic",
       "dept": "it",
       "stock_qty": 5,
-      "in_use": 0
+      "in_use": 4
     },
     {
       "id": "it03",
       "name": "Speakers",
       "dept": "it",
       "stock_qty": 8,
-      "in_use": 0
+      "in_use": 8
     },
     {
       "id": "it04",
       "name": "Laptop",
       "dept": "it",
       "stock_qty": 20,
-      "in_use": 0
+      "in_use": 20
     },
     {
       "id": "it05",
       "name": "Projector",
       "dept": "it",
       "stock_qty": 10,
-      "in_use": 0
+      "in_use": 10
     },
     {
       "id": "it06",
@@ -230,7 +313,7 @@
       "name": "White Board",
       "dept": "it",
       "stock_qty": 10,
-      "in_use": 0
+      "in_use": 5
     },
     {
       "id": "rc01",
@@ -307,7 +390,7 @@
       "name": "Stage Chair",
       "dept": "reception",
       "stock_qty": 30,
-      "in_use": 0
+      "in_use": 2
     },
     {
       "id": "rc12",
@@ -342,8 +425,919 @@
       "name": "T-Poy",
       "dept": "reception",
       "stock_qty": 15,
-      "in_use": 0
+      "in_use": 1
     }
   ],
-  "events": []
+  "events": [
+    {
+      "id": "ea2b39dc8",
+      "title": "TECH_blast_1",
+      "date": "2026-03-19",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_sem1",
+      "hall_name": "Seminar Hall 1",
+      "description": "INTERGRATED EVENT",
+      "budget_id": "BUD 101 ",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "789456123",
+      "expected_count": 100,
+      "departments": [
+        {
+          "school": "School of Management",
+          "department": "B.B.A. Logistics"
+        },
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc15",
+          "item_name": "Refreshment Table",
+          "dept": "reception",
+          "requested_qty": 5,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-16T11:16:01.004853",
+      "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "e401feaa4",
+      "title": "TECH_blast",
+      "date": "2026-03-17",
+      "days": 2,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "HIHIHI",
+      "budget_id": "BUD 101 ",
+      "coordinator": "SD",
+      "coordinator_phone": "1234569870",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "School of IT Integrated Commerce",
+          "department": "B.Com. Information Technology (IT)"
+        },
+        {
+          "school": "School of IT Integrated Commerce",
+          "department": "B.Com. Computer Applications (CA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": true,
+      "has_video": true,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 50,
+          "allocated_qty": 20,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it02",
+          "item_name": "Podium Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it03",
+          "item_name": "Speakers",
+          "dept": "it",
+          "requested_qty": 15,
+          "allocated_qty": 8,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it05",
+          "item_name": "Projector",
+          "dept": "it",
+          "requested_qty": 20,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it06",
+          "item_name": "Presenter",
+          "dept": "it",
+          "requested_qty": 20,
+          "allocated_qty": 8,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it09",
+          "item_name": "Video Camera",
+          "dept": "it",
+          "requested_qty": 20,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc01",
+          "item_name": "Lamp",
+          "dept": "reception",
+          "requested_qty": 52,
+          "allocated_qty": 20,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 20
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-16T11:37:52.575334",
+      "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "e19e7d849",
+      "title": "aswerty",
+      "event_type": "Conference",
+      "date": "2026-03-24",
+      "days": 5,
+      "time_slot": "10.30-8.30",
+      "hall_id": "h_aud2",
+      "hall_name": "Auditorium 2",
+      "description": "er5ty",
+      "budget_id": "4512",
+      "coordinator": "swdefrg",
+      "coordinator_phone": "45210154",
+      "expected_count": 500,
+      "departments": [
+        {
+          "school": "School of IT Integrated Commerce",
+          "department": "B.Com. E-Commerce (E-Com)"
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it07",
+          "item_name": "Podium",
+          "dept": "it",
+          "requested_qty": 4,
+          "allocated_qty": 4,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it08",
+          "item_name": "Photo Camera",
+          "dept": "it",
+          "requested_qty": 3,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it09",
+          "item_name": "Video Camera",
+          "dept": "it",
+          "requested_qty": 3,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-23T10:14:58.111840",
+      "principal_decision": "approved",
+      "principal_note": "",
+      "cancel_reason": "dsfghjkl;",
+      "cancelled_by": "Admin User",
+      "cancelled_at": "2026-03-23T11:01:09.052908"
+    },
+    {
+      "id": "e36d56ab8",
+      "title": "sdfghjk",
+      "event_type": "Guest Lecture",
+      "date": "2026-03-28",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_sem1",
+      "hall_name": "Seminar Hall 1",
+      "description": "",
+      "budget_id": "4512",
+      "coordinator": "dxfghjk",
+      "coordinator_phone": "7895412389",
+      "expected_count": 50,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "rc13",
+          "item_name": "Registration Chair",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-23T11:14:00.408985",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ede630e98",
+      "title": "TECH_GURU",
+      "event_type": "Cultural Event",
+      "date": "2026-03-24",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_sem2",
+      "hall_name": "Seminar Hall 2",
+      "description": "TECH EVENT INTAR CULTURAL EVENT",
+      "budget_id": "789",
+      "coordinator": "VISHNU",
+      "coordinator_phone": "9344457242",
+      "expected_count": 200,
+      "departments": [
+        {
+          "school": "School of IT Integrated Commerce",
+          "department": "B.Com. Computer Applications (CA)"
+        },
+        {
+          "school": "School of IT Integrated Commerce",
+          "department": "B.Com. Information Technology (IT)"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it02",
+          "item_name": "Podium Mic",
+          "dept": "it",
+          "requested_qty": 2,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it03",
+          "item_name": "Speakers",
+          "dept": "it",
+          "requested_qty": 8,
+          "allocated_qty": 8,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 2,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 4,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 4,
+          "allocated_qty": 1,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-23T15:35:17.619921",
+      "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "e07fd2740",
+      "title": "TECH_blast",
+      "event_type": "Seminar",
+      "date": "2026-03-25",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "fcvgbn",
+      "budget_id": "789",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Banking and Insurance (B&I)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it05",
+          "item_name": "Projector",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 8,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc03",
+          "item_name": "Tray",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T10:24:41.821911",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e7c9e5f29",
+      "title": "TECH_blast",
+      "event_type": "Seminar",
+      "date": "2026-03-25",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "fcvgbn",
+      "budget_id": "789",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Banking and Insurance (B&I)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 6,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it05",
+          "item_name": "Projector",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc03",
+          "item_name": "Tray",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T10:24:44.362460",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "eff5af76c",
+      "title": "TECH_blast",
+      "event_type": "Seminar",
+      "date": "2026-03-25",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "fcvgbn",
+      "budget_id": "789",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Banking and Insurance (B&I)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it05",
+          "item_name": "Projector",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc03",
+          "item_name": "Tray",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T10:24:44.792100",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e0fb13bd3",
+      "title": "TECH_blast",
+      "event_type": "Seminar",
+      "date": "2026-03-25",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "fcvgbn",
+      "budget_id": "789",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Banking and Insurance (B&I)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it04",
+          "item_name": "Laptop",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it05",
+          "item_name": "Projector",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc03",
+          "item_name": "Tray",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T10:24:45.015527",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ea54a0fdf",
+      "title": "TECH_blast",
+      "event_type": "Others",
+      "date": "2026-03-24",
+      "days": 1,
+      "time_slot": "12:00 PM - 3:00 PM",
+      "hall_id": "h_aud1,h_sem2",
+      "hall_name": "Seminar Hall 2, Auditorium 1",
+      "description": "dcedcdcedc",
+      "budget_id": "5844512",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 344,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Computing Science",
+          "department": "B.Sc. Information Technology (IT)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": true,
+      "has_video": true,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 3,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 3
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T13:01:06.684472",
+      "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "e4d8b49f7",
+      "title": "TECH_blast",
+      "event_type": "Others",
+      "date": "2026-03-24",
+      "days": 1,
+      "time_slot": "12:00 PM - 3:00 PM",
+      "hall_id": "h_aud1,h_sem2",
+      "hall_name": "Seminar Hall 2, Auditorium 1",
+      "description": "dcedcdcedc",
+      "budget_id": "5844512",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "1234569870",
+      "expected_count": 344,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Computing Science",
+          "department": "B.Sc. Information Technology (IT)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": true,
+      "has_video": true,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 3,
+          "allocated_qty": 3,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-03-24T13:01:10.502389",
+      "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "ed686c6f2",
+      "title": "TECH_blast_1",
+      "event_type": "Guest Lecture",
+      "date": "2026-03-27",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "Vickeyy",
+      "budget_id": "BUD 101 ",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Computing Science",
+          "department": "B.Sc. Computer Technology (CT)"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": true,
+      "requested_items": [
+        {
+          "item_id": "rc01",
+          "item_name": "Lamp",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 1,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u997dd40f",
+      "created_by_name": "vicky",
+      "created_at": "2026-03-25T15:09:13.070082",
+      "principal_decision": null,
+      "principal_note": "",
+      "cancel_reason": "Booker explicitly cancelled",
+      "cancelled_by": "vicky",
+      "cancelled_at": "2026-03-25T15:20:00.030472"
+    },
+    {
+      "id": "e4b40d2db",
+      "title": "TECH_blast_1",
+      "event_type": "Guest Lecture",
+      "date": "2026-03-26",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "Vickyy\n",
+      "budget_id": "BUD 101 ",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Professional Accounting (PA)"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "rc04",
+          "item_name": "Silver Bowls",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u997dd40f",
+      "created_by_name": "vicky",
+      "created_at": "2026-03-25T15:20:56.374814",
+      "principal_decision": null,
+      "principal_note": "",
+      "cancel_reason": "User cancelled via dashboard",
+      "cancelled_by": "vicky",
+      "cancelled_at": "2026-03-26T13:31:19.800339"
+    },
+    {
+      "id": "e94d1bb6b",
+      "title": "TECH_GURU",
+      "event_type": "General",
+      "date": "2026-03-26",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_oat",
+      "hall_name": "Open Air Theatre (OAT)",
+      "description": "demo",
+      "budget_id": "1000000",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "",
+      "expected_count": 200,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Sc. Data Science"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": true,
+      "has_video": true,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 50,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it02",
+          "item_name": "Podium Mic",
+          "dept": "it",
+          "requested_qty": 2,
+          "allocated_qty": 2,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 5,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u12c112bd",
+      "created_by_name": "naveen",
+      "created_at": "2026-03-26T14:23:14.082668",
+      "principal_decision": "approved",
+      "principal_note": ""
+    }
+  ]
 }

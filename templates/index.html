@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPR HUB – Login</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+  <title>KPRCAS HMS – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet">
   <style>
     *,
@@ -18,473 +18,314 @@
     }
 
     :root {
-      --accent: #2563eb;
-      --accent2: #3b82f6;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --bg: #f0f4fa;
-      --card: #ffffff;
-      --sidebar: #1e2d4e;
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #0ea5e9;
+      --bg: #0f172a;
+      --surface: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius: 20px;
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Outfit', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      margin: 0;
     }
 
-    /* Subtle bg pattern */
-    body {
-      background: #0f172a url('https://share.google/images/FAw6iO9QxPMFlB2zJ') center/cover no-repeat fixed !important;
-    }
-
-    body::before {
-      content: '';
+    /* Professional Mesh Gradient Background */
+    .mesh-bg {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(30, 45, 78, 0.75) 100%);
-      pointer-events: none;
-      z-index: 0;
+      z-index: -1;
+      background: 
+        radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.05) 0%, transparent 50%);
     }
 
-    .login-wrap {
-      display: flex;
-      width: 920px;
-      max-width: 96vw;
-      min-height: 580px;
-      border-radius: 22px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+    .blob {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      filter: blur(120px);
+      border-radius: 50%;
+      opacity: 0.15;
+      animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .blob-1 { top: -20%; left: -10%; }
+    .blob-2 { bottom: -20%; right: -10%; animation-delay: -5s; }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { transform: translate(100px, 50px) rotate(90deg) scale(1.1); }
+    }
+
+    .login-card {
+      width: 440px;
+      padding: 48px;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
       border: 1px solid var(--border);
-      animation: fadeUp 0.5s ease both;
+      border-radius: 32px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 1px var(--border);
       position: relative;
       z-index: 1;
+      animation: cardSlide 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(24px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    @keyframes cardSlide {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Left — brand */
-    .brand-panel {
-      flex: 1.1;
-      background: var(--sidebar);
-      padding: 52px 44px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
+    .brand-section {
+      text-align: center;
+      margin-bottom: 40px;
     }
 
-    .brand-panel::before {
-      content: '';
-      position: absolute;
-      top: -80px;
-      right: -80px;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent);
+    .brand-logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 18px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
     }
 
-    .brand-panel::after {
-      content: '';
-      position: absolute;
-      bottom: -60px;
-      left: -40px;
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(124, 58, 237, 0.1), transparent);
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
-    .brand-inner {
-      position: relative;
-      z-index: 1;
-    }
-
-    .logo-mark {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      border-radius: 16px;
-      font-size: 1.7rem;
+    .title {
+      font-size: 2rem;
       font-weight: 800;
-      color: #fff;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 28px rgba(59, 130, 246, 0.45);
-      letter-spacing: -1px;
-    }
-
-    .brand-title {
-      font-size: 2.6rem;
-      font-weight: 800;
-      line-height: 1.05;
-      color: #fff;
-      letter-spacing: -1px;
-    }
-
-    .brand-title span {
-      color: #93c5fd;
-    }
-
-    .brand-sub {
-      margin-top: 12px;
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 0.9rem;
-      line-height: 1.65;
-    }
-
-    .role-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 30px;
-    }
-
-    .chip {
-      padding: 5px 13px;
-      border-radius: 999px;
-      font-size: 0.73rem;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-      border: 1px solid;
-      letter-spacing: 0.02em;
-    }
-
-    .chip-admin {
-      color: #fcd34d;
-      border-color: rgba(252, 211, 77, 0.35);
-      background: rgba(252, 211, 77, 0.1);
-    }
-
-    .chip-booker {
-      color: #6ee7b7;
-      border-color: rgba(110, 231, 183, 0.35);
-      background: rgba(110, 231, 183, 0.1);
-    }
-
-    .chip-it {
-      color: #93c5fd;
-      border-color: rgba(147, 197, 253, 0.35);
-      background: rgba(147, 197, 253, 0.1);
-    }
-
-    .chip-reception {
-      color: #f9a8d4;
-      border-color: rgba(249, 168, 212, 0.35);
-      background: rgba(249, 168, 212, 0.1);
-    }
-
-    .chip-principal {
-      color: #c4b5fd;
-      border-color: rgba(196, 181, 253, 0.35);
-      background: rgba(196, 181, 253, 0.1);
-    }
-
-    .brand-footer {
-      font-size: 0.77rem;
-      color: rgba(255, 255, 255, 0.3);
-      position: relative;
-      z-index: 1;
-    }
-
-    .brand-footer strong {
-      color: #93c5fd;
-    }
-
-    /* Right — form */
-    .form-panel {
-      flex: 1;
-      background: var(--card);
-      padding: 52px 44px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .form-heading {
-      font-size: 1.75rem;
-      font-weight: 800;
-      margin-bottom: 5px;
-      letter-spacing: -0.5px;
-    }
-
-    .form-sub {
-      color: var(--muted);
-      font-size: 0.875rem;
-      margin-bottom: 34px;
-    }
-
-    .field {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: var(--muted);
+      letter-spacing: -0.03em;
       margin-bottom: 8px;
-      letter-spacing: 0.06em;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
       text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+      margin-left: 4px;
     }
 
-    input {
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
       width: 100%;
-      padding: 12px 15px;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.94rem;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      transition: all 0.3s;
     }
 
-    input:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-      background: #fff;
+    .input-wrapper input:focus {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
     }
 
-    input::placeholder {
-      color: #cbd5e1;
-    }
-
-    .btn-login {
+    .btn-submit {
       width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, var(--accent), #1d4ed8);
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
       border: none;
-      border-radius: 10px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.97rem;
+      border-radius: 16px;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 6px;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4);
+      transition: all 0.3s;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+      margin-top: 12px;
     }
 
-    .btn-login:hover {
+    .btn-submit:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5);
-    }
-
-    .btn-login:active {
-      transform: translateY(0);
-    }
-
-    .btn-login:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
+      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+      filter: brightness(1.1);
     }
 
     .error-msg {
-      background: #fff1f2;
-      border: 1px solid #fca5a5;
-      color: #b91c1c;
-      padding: 11px 15px;
-      border-radius: 10px;
-      font-size: 0.865rem;
-      margin-bottom: 14px;
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 12px;
+      color: #f87171;
+      font-size: 0.875rem;
+      font-weight: 500;
       display: none;
+      text-align: center;
     }
 
-    .error-msg.show {
-      display: block;
-      animation: shake 0.3s ease;
-    }
-
-    @keyframes shake {
-
-      0%,
-      100% {
-        transform: translateX(0);
-      }
-
-      25% {
-        transform: translateX(-5px);
-      }
-
-      75% {
-        transform: translateX(5px);
-      }
-    }
-
-    .demo-grid {
-      margin-top: 26px;
-      padding-top: 22px;
+    /* Demo Credentials Section */
+    .demo-section {
+      margin-top: 40px;
+      padding-top: 32px;
       border-top: 1px solid var(--border);
     }
 
-    .demo-label {
+    .demo-title {
       font-size: 0.72rem;
-      color: var(--muted);
-      margin-bottom: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
       font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 16px;
     }
 
-    .demo-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
 
     .demo-btn {
-      padding: 5px 13px;
-      border-radius: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
-      border: 1px solid;
-      transition: all 0.15s;
+      transition: all 0.2s;
+      text-align: center;
     }
 
     .demo-btn:hover {
-      transform: scale(1.04);
-      filter: brightness(0.95);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary);
+      color: #fff;
     }
 
-    .db-admin {
-      color: #92400e;
-      background: #fef3c7;
-      border-color: #fcd34d;
-    }
-
-    .db-booker {
-      color: #065f46;
-      background: #d1fae5;
-      border-color: #6ee7b7;
-    }
-
-    .db-it {
-      color: #1e40af;
-      background: #dbeafe;
-      border-color: #93c5fd;
-    }
-
-    .db-reception {
-      color: #9d174d;
-      background: #fce7f3;
-      border-color: #f9a8d4;
-    }
-
-    .db-principal {
-      color: #5b21b6;
-      background: #ede9fe;
-      border-color: #c4b5fd;
-    }
-
-    @media (max-width: 700px) {
-      .login-wrap {
-        flex-direction: column;
-      }
-
-      .brand-panel {
-        padding: 32px 28px;
-      }
-
-      .form-panel {
-        padding: 32px 28px;
-      }
-
-      .role-chips {
-        display: none;
-      }
-
-      .form-heading {
-        font-size: 1.4rem;
-      }
+    .demo-btn.full {
+      grid-column: span 2;
     }
   </style>
 </head>
 
 <body>
-  <div class="login-wrap">
-    <div class="brand-panel">
-      <div class="brand-inner">
-        <div class="logo-mark">K</div>
-        <div class="brand-title">KPR<br><span>HUB</span></div>
-        <div class="brand-sub">Event &amp; Inventory Management<br>System for KPRCAS Institution</div>
-        <div class="role-chips">
-          <span class="chip chip-admin">Admin</span>
-          <span class="chip chip-booker">Booker</span>
-          <span class="chip chip-it">IT Support</span>
-          <span class="chip chip-reception">Reception</span>
-          <span class="chip chip-principal">Principal</span>
-        </div>
+  <div class="mesh-bg"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="login-card">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="KPRCAS Logo">
       </div>
-      <div class="brand-footer">Powered by <strong>KPRCAS</strong> &nbsp;·&nbsp; v2.0</div>
+      <h1 class="title">KPRCAS HMS</h1>
+      <p class="subtitle">Event Management System</p>
     </div>
 
-    <div class="form-panel">
-      <div class="form-heading">Welcome back 👋</div>
-      <div class="form-sub">Sign in to access your dashboard</div>
-      <div class="error-msg" id="errMsg"></div>
-      <div class="field">
-        <label>Username</label>
+    <div class="form-group">
+      <label>Username</label>
+      <div class="input-wrapper">
         <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
       </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrapper">
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-      <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In →</button>
+    </div>
+
+    <button class="btn-submit" onclick="doLogin()">Sign In</button>
+    <div class="error-msg" id="errMsg"></div>
+
+    <div class="demo-section">
+      <div class="demo-title">Quick Access</div>
       <div class="demo-grid">
-        <div class="demo-label">Quick Login</div>
-        <div class="demo-buttons">
-          <button class="demo-btn db-admin" onclick="quickLogin('admin','admin123')">Admin</button>
-          <button class="demo-btn db-booker" onclick="quickLogin('booker','booker123')">Booker</button>
-          <button class="demo-btn db-it" onclick="quickLogin('it','it123')">IT Support</button>
-          <button class="demo-btn db-reception" onclick="quickLogin('reception','reception123')">Reception</button>
-          <button class="demo-btn db-principal" onclick="quickLogin('principal','principal123')">Principal</button>
-        </div>
+        <button class="demo-btn" onclick="qL('admin','admin123')">Admin</button>
+        <button class="demo-btn" onclick="qL('booker','booker123')">Booker</button>
+        <button class="demo-btn" onclick="qL('it','it123')">IT Dept</button>
+        <button class="demo-btn" onclick="qL('reception','reception123')">Reception</button>
+        <button class="demo-btn full" onclick="qL('principal','principal123')">Principal Desk</button>
       </div>
     </div>
   </div>
 
   <script>
-    function quickLogin(u, p) { document.getElementById('username').value = u; document.getElementById('password').value = p; doLogin(); }
-    async function doLogin() {
-      const btn = document.getElementById('loginBtn'), errMsg = document.getElementById('errMsg');
-      const username = document.getElementById('username').value.trim(), password = document.getElementById('password').value;
-      if (!username || !password) { showError('Please enter username and password'); return; }
-      btn.disabled = true; btn.textContent = 'Signing in…'; errMsg.classList.remove('show');
-      try {
-        const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
-        const data = await res.json();
-        if (!res.ok) { showError(data.error || 'Login failed'); return; }
-        window.location.href = '/dashboard';
-      } catch (e) { showError('Connection error. Is the server running?'); }
-      finally { btn.disabled = false; btn.textContent = 'Sign In →'; }
+    function qL(u, p) {
+      document.getElementById('username').value = u;
+      document.getElementById('password').value = p;
+      doLogin();
     }
-    function showError(msg) { const el = document.getElementById('errMsg'); el.textContent = msg; el.classList.add('show'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    async function doLogin() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const err = document.getElementById('errMsg');
+      if (!u || !p) {
+        err.style.display = 'block';
+        err.textContent = 'Enter username & password';
+        return;
+      }
+      err.style.display = 'none';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          err.style.display = 'block';
+          err.textContent = d.error || 'Login failed';
+          return;
+        }
+        window.location.href = '/dashboard';
+      } catch (e) {
+        err.style.display = 'block';
+        err.textContent = 'Server connection error';
+      }
+    }
   </script>
 </body>
 

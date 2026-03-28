@@ -1,4 +1,4 @@
-# KPR HUB — Event & Inventory Management System
+# KPR EMS — Event & Analytics Management System
 
 A full-stack web application with a **Flask backend** and **HTML/CSS/JS frontend**.
 

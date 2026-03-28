@@ -115,8 +115,14 @@ function navigateTo(page) {
 
 // ─── OVERVIEW (ADMIN) ──────────────────────────────────────────────────────────
 async function renderOverview() {
-  const stats = await api('/api/stats');
+  const [stats, events] = await Promise.all([api('/api/stats'), api('/api/events')]);
+  
   document.getElementById('pageContent').innerHTML = `
+ 
+    ${getUpcomingEventsHtml(events)}
+
+    
+   
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">System Overview</div><div class="section-sub">KPRCAS Event & Inventory Management</div></div>
@@ -148,6 +154,7 @@ async function renderManageUsers() {
   const users = await api('/api/users');
   const roleColors = { admin: 'badge-admin', booker: 'badge-booker', it: 'badge-it', reception: 'badge-reception', principal: 'badge-principal' };
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Users</div><div class="section-sub">${users.length} system accounts</div></div>
@@ -158,10 +165,11 @@ async function renderManageUsers() {
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
           <tbody>
             ${users.map(u => `<tr>
               <td style="font-weight:600">${u.name}</td>
+              <td style="color:var(--muted);font-size:0.85rem">${u.email || '—'}</td>
               <td><span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:#f8fafc;padding:2px 8px;border-radius:5px;border:1px solid #e2e8f0">${u.username}</span></td>
               <td><span class="badge ${roleColors[u.role] || ''}">${u.role}</span></td>
               <td><div class="td-actions">
@@ -181,6 +189,7 @@ function openAddUser() {
     <div class="form-grid">
       <div class="field"><label>Full Name</label><input id="uName" placeholder="Dr. Jane Smith"></div>
       <div class="field"><label>Username</label><input id="uUsername" placeholder="jsmith"></div>
+      <div class="field"><label>Email</label><input id="uEmail" type="email" placeholder="user@example.com"></div>
       <div class="field"><label>Password</label><input id="uPassword" type="password" placeholder="••••••••"></div>
       <div class="field"><label>Role</label><select id="uRole">
         <option value="booker">Booker</option><option value="it">IT Support</option>
@@ -194,7 +203,7 @@ function openAddUser() {
   openModal();
 }
 async function submitAddUser() {
-  const body = { name: v('uName'), username: v('uUsername'), password: v('uPassword'), role: v('uRole') };
+  const body = { name: v('uName'), username: v('uUsername'), email: v('uEmail'), password: v('uPassword'), role: v('uRole') };
   if (!body.name || !body.username || !body.password) { showToast('Fill all fields', 'error'); return; }
   await api('/api/users', 'POST', body); closeModal(); showToast('User created', 'success'); renderManageUsers();
 }
@@ -205,6 +214,7 @@ function openEditUser(uid) {
     document.getElementById('modalBody').innerHTML = `
       <div class="form-grid">
         <div class="field"><label>Full Name</label><input id="euName" value="${u.name}"></div>
+        <div class="field"><label>Email</label><input id="euEmail" type="email" value="${u.email || ''}"></div>
         <div class="field"><label>Role</label><select id="euRole">
           ${['booker', 'it', 'reception', 'principal', 'admin'].map(r => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${r}</option>`).join('')}
         </select></div>
@@ -218,7 +228,7 @@ function openEditUser(uid) {
   });
 }
 async function submitEditUser(uid) {
-  const body = { name: v('euName'), role: v('euRole') }; const pw = v('euPassword'); if (pw) body.password = pw;
+  const body = { name: v('euName'), email: v('euEmail'), role: v('euRole') }; const pw = v('euPassword'); if (pw) body.password = pw;
   await api(`/api/users/${uid}`, 'PUT', body); closeModal(); showToast('User updated', 'success'); renderManageUsers();
 }
 async function deleteUser(uid, name) {
@@ -230,6 +240,7 @@ async function deleteUser(uid, name) {
 async function renderManageHalls() {
   const halls = await api('/api/halls');
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Halls & Venues</div><div class="section-sub">${halls.length} venues</div></div>
@@ -321,6 +332,7 @@ async function deleteHall(hid, name) {
 async function renderManageInventory() {
   const items = await api('/api/inventory');
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">All Inventory</div></div>
@@ -395,6 +407,7 @@ async function deleteInventory(iid, name) {
 async function renderSettings() {
   const s = await api('/api/settings');
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header"><div class="section-title">Portal Settings</div></div>
       <div class="table-wrap" style="padding:24px;max-width:520px">
@@ -470,107 +483,192 @@ let _allHalls = [];
 
 // ─── BOOKER: NEW EVENT ────────────────────────────────────────────────────────
 async function renderNewEvent() {
-  const [halls, inventory] = await Promise.all([api('/api/halls'), api('/api/inventory')]);
+  const [halls, inventory, hierarchy] = await Promise.all([api('/api/halls'), api('/api/inventory'), api('/api/hierarchy')]);
   _allHalls = halls;
   const availHalls = halls.filter(h => !h.locked);
   const itItems = inventory.filter(i => i.dept === 'it');
   const recItems = inventory.filter(i => i.dept === 'reception');
 
   document.getElementById('pageContent').innerHTML = `
-  <div style="max-width:960px">
-    <div class="section-header" style="margin-bottom:24px">
-      <div>
-        <div class="section-title">📋 New Event Booking Form</div>
-        <div class="section-sub">Fill all details — halls are suggested based on expected attendance</div>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <div class="wizard-title">📋 New Event Booking</div>
+      <div class="wizard-steps">
+        <div class="wstep active" id="ws1" onclick="gotoStep(1)"><span>1</span> Details</div>
+        <div class="wstep" id="ws2" onclick="gotoStep(2)"><span>2</span> Hall</div>
+        <div class="wstep" id="ws3" onclick="gotoStep(3)"><span>3</span> IT</div>
+        <div class="wstep" id="ws4" onclick="gotoStep(4)"><span>4</span> Reception</div>
       </div>
     </div>
+    <div class="wizard-body">
 
-    <!-- STEP 1: Basic Details -->
-    <div class="form-card">
-      <div class="form-card-title"><span class="step-badge">1</span> Event Details</div>
-      <div class="form-grid" style="margin-top:18px">
-        <div class="field" style="grid-column:1/-1">
-          <label>Event Title *</label>
-          <input id="evTitle" placeholder="e.g. Annual Tech Fest 2025">
+      <!-- PAGE 1 -->
+      <div class="wpage" id="wpage1">
+        <div class="form-grid" style="gap:16px">
+          <div class="field" style="grid-column:1/-1">
+            <label>Event Title *</label>
+            <input id="evTitle" placeholder="e.g. Annual Tech Fest 2025" style="border-color:#0ea5e9">
+          </div>
+          <div class="field">
+            <label>Event Coordinator *</label>
+            <input id="evCoord" placeholder="Coordinator name" style="border-color:#10b981">
+          </div>
+          <div class="field">
+            <label>Expected Attendance *</label>
+            <input id="evCount" type="number" min="1" placeholder="e.g. 120" oninput="onCountChange(this.value)" style="border-color:#8b5cf6">
+          </div>
+          <div class="field">
+            <label>Date *</label>
+            <input id="evDate" type="date" min="${new Date().toISOString().split('T')[0]}" style="border-color:#f59e0b">
+          </div>
+          <div class="field">
+            <label>Time Slot *</label>
+            <select id="evSlot" style="border-color:#0ea5e9">
+              <option>9:00 AM - 12:00 PM</option>
+              <option>12:00 PM - 3:00 PM</option>
+              <option>3:00 PM - 6:00 PM</option>
+              <option>9:00 AM - 6:00 PM (Full Day)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Budget ID</label>
+            <input id="evBudget" type="text" placeholder="e.g. BGT-2025-01" style="border-color:#10b981">
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Description</label>
+            <textarea id="evDesc" rows="2" placeholder="Brief description…"></textarea>
+          </div>
         </div>
-        <div class="field">
-          <label>Event Coordinator *</label>
-          <input id="evCoord" placeholder="Name of event coordinator">
+
+        <!-- School / Department Selector -->
+        <div style="margin-top:18px;border-top:1.5px dashed #bae6fd;padding-top:16px">
+          <div style="font-size:0.82rem;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
+            🎓 Participating Schools & Departments
+          </div>
+          <div id="schoolPicker" style="display:flex;flex-direction:column;gap:10px">
+            ${buildSchoolPicker(hierarchy)}
+          </div>
         </div>
-        <div class="field">
-          <label>Expected Attendance *</label>
-          <input id="evCount" type="number" min="1" placeholder="e.g. 120" oninput="onCountChange(this.value)">
+
+        <!-- Special Requirements -->
+        <div style="margin-top:18px;border-top:1.5px dashed #bae6fd;padding-top:16px">
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Special Requirements</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+            ${yesNoRow('evIntro','🎬','Intro Video / KPR Anthem')}
+            ${yesNoRow('evDance','💃','Dance Performance')}
+            ${yesNoRow('evPhotos','📷','Photography')}
+            ${yesNoRow('evVideo','🎥','Videography')}
+          </div>
         </div>
-        <div class="field">
-          <label>Date *</label>
-          <input id="evDate" type="date" min="${new Date().toISOString().split('T')[0]}">
-        </div>
-        <div class="field">
-          <label>Time Slot *</label>
-          <select id="evSlot">
-            <option>9:00 AM - 12:00 PM</option>
-            <option>12:00 PM - 3:00 PM</option>
-            <option>3:00 PM - 6:00 PM</option>
-            <option>9:00 AM - 6:00 PM (Full Day)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Budget (₹)</label>
-          <input id="evBudget" type="number" placeholder="50000">
-        </div>
-        <div class="field" style="grid-column:1/-1">
-          <label>Event Description</label>
-          <textarea id="evDesc" placeholder="Brief description of the event…"></textarea>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="navigateTo('my-events')">✕ Cancel</button>
+          <button class="btn btn-primary" onclick="gotoStep(2)">Next: Hall →</button>
         </div>
       </div>
 
-      <!-- Yes/No Requirements -->
-      <div style="margin-top:20px;border-top:1.5px dashed var(--border);padding-top:18px">
-        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px">Special Requirements</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-          ${yesNoRow('evIntro', '🎬', 'Introduction Video / KPR Anthem')}
-          ${yesNoRow('evDance', '💃', 'Dance Performance')}
-          ${yesNoRow('evPhotos', '📷', 'Photography Required')}
-          ${yesNoRow('evVideo', '🎥', 'Videography Required')}
+      <!-- PAGE 2 -->
+      <div class="wpage" id="wpage2" style="display:none">
+        <div style="font-size:0.82rem;color:#0369a1;font-weight:600;margin-bottom:8px">
+          💡 Click cards to select halls. You can select multiple halls.
+        </div>
+        <div id="hallSuggestionBanner" style="display:none" class="suggest-banner"></div>
+        <div id="hallGrid" class="hall-select-grid" style="margin-top:8px">
+          ${availHalls.map(h => hallSelectCard(h)).join('')}
+        </div>
+        <input type="hidden" id="evHall">
+        <div id="hallSelectedDisplay" style="margin-top:12px;display:none;padding:12px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);border-radius:12px;border:1.5px solid #a7f3d0">
+          <strong style="color:#065f46">✓ Selected Halls:</strong>
+          <span id="hallSelectedNames" style="color:#0369a1;margin-left:8px"></span>
+          <span id="hallTotalCapacity" style="float:right;color:#7c3aed;font-weight:700"></span>
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="gotoStep(1)">← Back</button>
+          <button class="btn btn-primary" onclick="gotoStep(3)">Next: IT →</button>
         </div>
       </div>
-    </div>
 
-    <!-- STEP 2: Hall Selection -->
-    <div class="form-card" style="margin-top:20px">
-      <div class="form-card-title"><span class="step-badge">2</span> Select Hall / Venue</div>
-      <div id="hallSuggestionBanner" style="display:none" class="suggest-banner"></div>
-      <div id="hallGrid" class="hall-select-grid" style="margin-top:16px">
-        ${availHalls.map(h => hallSelectCard(h)).join('')}
+      <!-- PAGE 3 -->
+      <div class="wpage" id="wpage3" style="display:none">
+        <div class="req-table">
+          <div class="req-header"><span>IT Item</span><span style="text-align:center">Available</span><span style="text-align:center">Qty</span></div>
+          ${itItems.length ? itItems.map(i => reqRow(i)).join('') : '<div style="padding:20px;text-align:center;color:var(--muted)">No IT items in inventory</div>'}
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="gotoStep(2)">← Back</button>
+          <button class="btn btn-primary" onclick="gotoStep(4)">Next: Reception →</button>
+        </div>
       </div>
-      <input type="hidden" id="evHall">
-      <div id="hallPreview" style="display:none;margin-top:16px"></div>
-    </div>
 
-    <!-- STEP 3: IT Requirements -->
-    <div class="form-card" style="margin-top:20px">
-      <div class="form-card-title"><span class="step-badge">3</span> IT Requirements</div>
-      <div class="req-table" style="margin-top:16px">
-        <div class="req-header"><span>Particulars</span><span style="text-align:center">Available</span><span style="text-align:center">Count</span></div>
-        ${itItems.map(i => reqRow(i)).join('')}
+      <!-- PAGE 4 -->
+      <div class="wpage" id="wpage4" style="display:none">
+        <div class="req-table">
+          <div class="req-header"><span>Item</span><span style="text-align:center">Available</span><span style="text-align:center">Qty</span></div>
+          ${recItems.length ? recItems.map(i => reqRow(i)).join('') : '<div style="padding:20px;text-align:center;color:var(--muted)">No reception items in inventory</div>'}
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="gotoStep(3)">← Back</button>
+          <button class="btn btn-primary" onclick="submitNewEvent()">🚀 Submit Proposal</button>
+        </div>
       </div>
-    </div>
 
-    <!-- STEP 4: Stationary / Reception Requirements -->
-    <div class="form-card" style="margin-top:20px">
-      <div class="form-card-title"><span class="step-badge">4</span> Stationary &amp; Reception Requirements</div>
-      <div class="req-table" style="margin-top:16px">
-        <div class="req-header"><span>Particulars</span><span style="text-align:center">Available</span><span style="text-align:center">Count</span></div>
-        ${recItems.map(i => reqRow(i)).join('')}
+    </div>
+  </div>
+  `;
+}
+
+
+function resetNewEventForm() {
+  _selectedHalls = {};
+}
+
+function gotoStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const pg = document.getElementById('wpage' + i);
+    const ws = document.getElementById('ws' + i);
+    if (pg) pg.style.display = (i === n) ? '' : 'none';
+    if (ws) { ws.classList.toggle('active', i === n); ws.classList.toggle('done', i < n); }
+  }
+}
+
+
+// ─── SCHOOL / DEPT PICKER ──────────────────────────────────────────────────
+function buildSchoolPicker(hierarchy) {
+  if (!hierarchy || typeof hierarchy !== 'object') return '<em style="color:var(--muted)">No schools found</em>';
+  return Object.entries(hierarchy).map(([school, depts]) => `
+    <div class="school-block" id="sb_${btoa(school).replace(/=/g,'').slice(0,8)}">
+      <label class="school-label">
+        <input type="checkbox" class="school-chk" value="${school}"
+          onchange="toggleSchool(this,'${school.replace(/'/g,"\'")}')">
+        <span class="school-name">🏫 ${school}</span>
+      </label>
+      <div class="dept-list" id="dl_${btoa(school).replace(/=/g,'').slice(0,8)}" style="display:none">
+        ${depts.map(dep => `
+          <label class="dept-label">
+            <input type="checkbox" class="dept-chk" data-school="${school.replace(/"/g,'&quot;')}" value="${dep}">
+            <span>${dep}</span>
+          </label>`).join('')}
       </div>
-    </div>
+    </div>`).join('');
+}
 
-    <!-- Actions -->
-    <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;padding-bottom:40px">
-      <button class="btn btn-outline" onclick="navigateTo('my-events')">✕ Cancel</button>
-      <button class="btn btn-primary" onclick="submitNewEvent()">🚀 Submit Booking Proposal</button>
-    </div>
-  </div>`;
+function toggleSchool(chk, school) {
+  const id = btoa(school).replace(/=/g,'').slice(0,8);
+  const dl = document.getElementById('dl_' + id);
+  if (dl) dl.style.display = chk.checked ? 'grid' : 'none';
+  // Select all depts when school is checked
+  if (chk.checked && dl) {
+    dl.querySelectorAll('.dept-chk').forEach(c => c.checked = true);
+  } else if (dl) {
+    dl.querySelectorAll('.dept-chk').forEach(c => c.checked = false);
+  }
+}
+
+function getSelectedDepartments() {
+  const result = [];
+  document.querySelectorAll('.dept-chk:checked').forEach(chk => {
+    result.push({ school: chk.dataset.school, department: chk.value });
+  });
+  return result;
 }
 
 function yesNoRow(id, icon, label) {
@@ -603,24 +701,39 @@ function hallSelectCard(h) {
   </div>`;
 }
 
+// Multi-hall selection tracker
+let _selectedHalls = {};
+
 function selectHall(hid, hname, hcap) {
-  document.getElementById('evHall').value = hid;
-  // Highlight selected
-  document.querySelectorAll('.hall-pick-card').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('hcard_' + hid);
-  if (card) card.classList.add('selected');
-  // Show preview
-  const hall = _allHalls.find(h => h.id === hid);
-  const img = getHallImage(hall);
-  document.getElementById('hallPreview').style.display = 'block';
-  document.getElementById('hallPreview').innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--accent-lt);border:1.5px solid var(--accent-mid);border-radius:10px">
-      <img src="${img}" style="width:80px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0">
-      <div>
-        <div style="font-weight:700;color:var(--accent)">✓ Selected: ${hname}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:3px">Capacity: ${hcap} · ${hall.type}</div>
-      </div>
-    </div>`;
+  // Toggle selection
+  if (_selectedHalls[hid]) {
+    delete _selectedHalls[hid];
+  } else {
+    _selectedHalls[hid] = { id: hid, name: hname, capacity: parseInt(hcap) };
+  }
+  // Update card styles
+  document.querySelectorAll('.hall-pick-card').forEach(c => {
+    const id = c.id.replace('hcard_', '');
+    c.classList.toggle('selected', !!_selectedHalls[id]);
+  });
+  // Update hidden input with comma-separated IDs
+  const ids = Object.keys(_selectedHalls);
+  document.getElementById('evHall').value = ids.join(',');
+  // Update display
+  const dispEl = document.getElementById('hallSelectedDisplay');
+  const namesEl = document.getElementById('hallSelectedNames');
+  const capEl = document.getElementById('hallTotalCapacity');
+  if (ids.length === 0) {
+    dispEl.style.display = 'none';
+  } else {
+    dispEl.style.display = 'block';
+    namesEl.textContent = Object.values(_selectedHalls).map(h => h.name).join(', ');
+    const totalCap = Object.values(_selectedHalls).reduce((s,h) => s + h.capacity, 0);
+    capEl.textContent = 'Total Capacity: ' + totalCap;
+    // Trigger suggestion re-check
+    const count = parseInt(document.getElementById('evCount')?.value || 0);
+    if (count > 0) onCountChange(count);
+  }
 }
 
 function onCountChange(val) {
@@ -672,21 +785,26 @@ function inventoryRequestRow(item) {
   </div>`;
 }
 async function submitNewEvent() {
-  const title = v('evTitle'), date = v('evDate'), time_slot = v('evSlot'), hall_id = v('evHall'), budget = v('evBudget');
+  const title = v('evTitle'), date = v('evDate'), time_slot = v('evSlot'), hall_id = v('evHall'), budget_id = v('evBudget');
   const coordinator = v('evCoord'), expected_count = v('evCount');
-  if (!title || !date || !hall_id) { showToast('Please fill Event Title, Date and select a Hall', 'error'); return; }
+  if (!title || !date) { showToast('Please fill Event Title and Date', 'error'); return; }
+  if (!hall_id) { showToast('Please select at least one Hall on step 2', 'error'); return; }
   if (!coordinator) { showToast('Please enter the Event Coordinator name', 'error'); return; }
   const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value === 'yes';
   const inventory = await api('/api/inventory');
   const items = inventory.map(i => ({ item_id: i.id, qty: parseInt(document.getElementById('qty_' + i.id)?.value || 0) })).filter(i => i.qty > 0);
+  // Compute hall_name from selected halls
+  const selectedHallList = Object.values(_selectedHalls || {});
+  const hall_name = selectedHallList.map(h => h.name).join(', ') || hall_id;
+  const departments = getSelectedDepartments();
   const body = {
-    title, date, time_slot, hall_id, budget: parseFloat(budget || 0),
+    title, date, time_slot, hall_id, hall_name, budget_id,
     description: v('evDesc'), coordinator, expected_count: parseInt(expected_count) || 0,
     has_intro_video: getRadio('evIntro'),
     has_dance: getRadio('evDance'),
     has_photos: getRadio('evPhotos'),
     has_video: getRadio('evVideo'),
-    items
+    departments, items
   };
   await api('/api/events', 'POST', body);
   showToast('Event proposal submitted successfully!', 'success');
@@ -699,6 +817,7 @@ async function renderAllEvents() {
   events.sort((a, b) => new Date(a.date) - new Date(b.date));
   const role = currentUser.role;
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">All Events</div><div class="section-sub">${events.length} total</div></div>
@@ -717,6 +836,7 @@ async function renderPendingEvents() {
   const pending = events.filter(e => e.status === 'principal_review');
   const reviewed = events.filter(e => e.status !== 'principal_review');
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Events Awaiting Approval</div><div class="section-sub">${pending.length} pending</div></div>
@@ -732,11 +852,17 @@ async function renderPendingEvents() {
 // ─── DEPT REQUESTS ────────────────────────────────────────────────────────────
 async function renderDeptRequests(dept) {
   const events = await api('/api/events');
+  
   const relevant = events.filter(e => e.requested_items.some(i => i.dept === dept) && (e.status === 'dept_review' || e.status === 'principal_review' || e.status === 'approved'));
   relevant.sort((a, b) => new Date(a.date) - new Date(b.date));
   const pending = relevant.filter(e => e.requested_items.some(i => i.dept === dept && !i.dept_approved));
   const done = relevant.filter(e => e.requested_items.every(i => i.dept !== dept || i.dept_approved));
   document.getElementById('pageContent').innerHTML = `
+ 
+    ${getUpcomingEventsHtml(events)}
+
+    
+   
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Pending Inventory Requests</div><div class="section-sub">${pending.length} awaiting your allocation</div></div>
@@ -758,6 +884,7 @@ async function renderDeptRequests(dept) {
 async function renderDeptInventory(dept) {
   const items = await api('/api/inventory?dept=' + dept);
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">${dept === 'it' ? 'IT' : 'Reception'} Inventory</div></div>
@@ -812,6 +939,7 @@ async function renderReturns(dept) {
   const returnable = events.filter(e => e.status === 'approved' && e.requested_items.some(i => i.dept === dept && i.dept_approved && !i.returned));
   const returned = events.filter(e => e.requested_items.some(i => i.dept === dept && i.returned));
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Pending Returns</div><div class="section-sub">Mark items as returned after event</div></div>
@@ -877,9 +1005,14 @@ function eventCard(e, role) {
       primaryBtn = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPrincipalModal('${e.id}')">Review & Decide</button>`;
     }
     if (role === 'booker' && e.status === 'dept_review') {
+      primaryBtn += `<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openEditEventModal('${e.id}')">Edit</button>`;
       primaryBtn += `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cancelEvent('${e.id}')">Cancel</button>`;
     }
     if (role === 'admin') {
+      if (e.status !== 'approved' && e.status !== 'rejected') {
+        primaryBtn += `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();adminApproveEvent('${e.id}')">Approve</button>`;
+      }
+      primaryBtn += `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();adminDeleteEvent('${e.id}')">Delete</button>`;
       primaryBtn += `<button class="btn btn-report btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')">📄</button>`;
     }
   }
@@ -906,7 +1039,7 @@ function eventCard(e, role) {
       <span class="event-meta-item">📅 ${e.date}</span>
       <span class="event-meta-item">⏰ ${e.time_slot}</span>
       ${!isDepRole ? `<span class="event-meta-item">🏛️ ${e.hall_name}</span>` : ''}
-      ${(!isDepRole && e.budget) ? `<span class="event-meta-item">💰 ₹${Number(e.budget).toLocaleString()}</span>` : ''}
+      ${(!isDepRole && e.budget_id) ? `<span class="event-meta-item">🔖 ${e.budget_id}</span>` : ''}
     </div>
     ${isDepRole && myItems.length > 0 ? `
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
@@ -934,7 +1067,7 @@ async function viewEventDetail(eid) {
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${e.date}</span></div>
       <div class="detail-row"><span class="detail-label">Time Slot</span><span class="detail-value">${e.time_slot}</span></div>
       <div class="detail-row"><span class="detail-label">Hall</span><span class="detail-value">${e.hall_name}</span></div>
-      <div class="detail-row"><span class="detail-label">Budget</span><span class="detail-value" style="color:var(--gold)">₹${Number(e.budget).toLocaleString()}</span></div>
+      <div class="detail-row"><span class="detail-label">Budget ID</span><span class="detail-value" style="color:var(--gold)">${e.budget_id || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${e.status.replace(/_/g, ' ').toUpperCase()}</span></div>
       ${e.coordinator ? `<div class="detail-row"><span class="detail-label">Coordinator</span><span class="detail-value">${e.coordinator}</span></div>` : ''}
       ${e.expected_count ? `<div class="detail-row"><span class="detail-label">Expected Attendance</span><span class="detail-value">${e.expected_count}</span></div>` : ''}
@@ -995,7 +1128,10 @@ async function openAllocModal(eid, dept) {
   myItems.forEach(i => {
     const invItem = inv.find(x => x.id === i.item_id);
     const el = document.getElementById('avail_' + i.item_id);
-    if (el && invItem) el.innerHTML = `<strong style="color:var(--green)">${invItem.available_qty}</strong>`;
+    if (el) {
+      if (invItem) el.innerHTML = `<strong style="color:var(--green)">${invItem.available_qty}</strong>`;
+      else el.innerHTML = `<strong style="color:var(--red)">0 (Deleted)</strong>`;
+    }
   });
 }
 async function submitAllocation(eid, dept) {
@@ -1017,8 +1153,8 @@ async function openPrincipalModal(eid) {
   document.getElementById('modalTitle').textContent = 'Final Review — ' + e.title;
   document.getElementById('modalBody').innerHTML = `
     <div class="budget-display">
-      <div class="amount">₹${Number(e.budget).toLocaleString()}</div>
-      <div class="label">Proposed Event Budget</div>
+      <div class="amount">${e.budget_id || '—'}</div>
+      <div class="label">Proposed Event Budget ID</div>
     </div>
     <div class="detail-section">
       <h4>Event Details</h4>
@@ -1056,10 +1192,109 @@ async function submitPrincipalDecision(eid, decision) {
 
 async function cancelEvent(eid) {
   if (!confirm('Cancel this event proposal?')) return;
-  await api(`/api/events/${eid}`, 'DELETE');
+  await api(`/api/events/${eid}/cancel`, 'POST', { reason: 'User cancelled via dashboard' });
   showToast('Event cancelled', 'info');
-  renderMyEvents();
+  navigateTo(currentPage);
 }
+
+async function adminApproveEvent(eid) {
+  if (!confirm('Approve this event?')) return;
+  await api(`/api/events/${eid}/principal-review`, 'POST', { decision: 'approved', note: 'Approved by Admin via Quick Action' });
+  showToast('Event approved', 'success');
+  navigateTo(currentPage);
+}
+
+async function adminDeleteEvent(eid) {
+  if (!confirm('Permanently delete this event? This action cannot be undone.')) return;
+  await api(`/api/events/${eid}`, 'DELETE');
+  showToast('Event deleted', 'info');
+  navigateTo(currentPage);
+}
+
+async function openEditEventModal(eid) {
+  const e = await api('/api/events/' + eid);
+  const halls = await api('/api/halls');
+  const availHalls = halls.filter(h => !h.locked || h.id === e.hall_id);
+  
+  document.getElementById('modalTitle').textContent = 'Edit Event Details';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-grid large-form">
+      <div class="field" style="grid-column:1/-1">
+        <label>Event Title</label>
+        <input id="editTitle" value="${e.title.replace(/"/g, '&quot;')}">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="editDate" type="date" value="${e.date}">
+      </div>
+      <div class="field">
+        <label>Time Slot</label>
+        <select id="editSlot">
+          <option ${e.time_slot.includes('9:00 AM - 12') ? 'selected' : ''}>9:00 AM - 12:00 PM</option>
+          <option ${e.time_slot.includes('12:00 PM - 3') ? 'selected' : ''}>12:00 PM - 3:00 PM</option>
+          <option ${e.time_slot.includes('3:00 PM - 6') ? 'selected' : ''}>3:00 PM - 6:00 PM</option>
+          <option ${e.time_slot.includes('Full Day') ? 'selected' : ''}>9:00 AM - 6:00 PM (Full Day)</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Hall</label>
+        <select id="editHall">
+          ${availHalls.map(h => `<option value="${h.id}" ${h.id === e.hall_id ? 'selected' : ''}>${h.name} (${h.capacity} seats)</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Expected Attendance</label>
+        <input id="editCount" type="number" value="${e.expected_count}">
+      </div>
+      <div class="field">
+        <label>Coordinator</label>
+        <input id="editCoord" value="${e.coordinator.replace(/"/g, '&quot;')}">
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:0;margin-top:20px;">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditEvent('${eid}')">Save Changes</button>
+    </div>
+  `;
+  openModal();
+}
+
+async function submitEditEvent(eid) {
+  const body = {
+    title: v('editTitle'),
+    date: v('editDate'),
+    time_slot: v('editSlot'),
+    hall_id: v('editHall'),
+    expected_count: parseInt(v('editCount')) || 0,
+    coordinator: v('editCoord')
+  };
+  if (!body.title || !body.date) { showToast('Title and Date are required', 'error'); return; }
+  await api('/api/events/' + eid, 'PUT', body);
+  closeModal();
+  showToast('Event updated successfully', 'success');
+  navigateTo(currentPage);
+}
+
+function getUpcomingEventsHtml(allEvents) {
+  const upcoming = allEvents.filter(e => e.status === 'approved').sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,3);
+  if (upcoming.length === 0) return '';
+  return `
+    <div class="section upcoming-widget" style="margin-bottom:20px;">
+      <div class="section-header"><div class="section-title">Upcoming Approved Events</div></div>
+      <div class="cards-grid upcoming-cards">
+        ${upcoming.map(e => `
+          <div class="event-card upcoming-item">
+            <div class="event-title">${e.title}</div>
+            <div class="event-meta-item">📅 ${e.date} &nbsp; ⏰ ${e.time_slot}</div>
+            <div class="event-meta-item">🏛️ ${e.hall_name}</div>
+            <div style="font-size:0.75rem; color:var(--muted); margin-top:6px;">Organizer: ${e.created_by_name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  REPORTS PAGE
@@ -1072,6 +1307,7 @@ async function renderReports() {
 
   const reportCards = getReportCards(role);
   document.getElementById('pageContent').innerHTML = `
+    
     <div class="section">
       <div class="section-header">
         <div>
@@ -1291,12 +1527,12 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
   if (['all-events', 'approved', 'pending', 'my-events', 'full-summary', 'dept-it', 'dept-reception', 'returns-it', 'returns-reception'].includes(type)) {
     const evSet = filtered[type] || events;
     body += `<h2>📅 Events (${evSet.length})</h2>
-    <table><thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Hall</th><th>Budget</th><th>Organizer</th><th>Status</th></tr></thead>
+    <table><thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Hall</th><th>Budget ID</th><th>Organizer</th><th>Status</th></tr></thead>
     <tbody>${evSet.map(e => `<tr>
       <td style="font-weight:700">${e.title}</td>
       <td>${e.date}</td><td style="font-size:0.78rem">${e.time_slot}</td>
       <td>${e.hall_name}</td>
-      <td>₹${Number(e.budget).toLocaleString()}</td>
+      <td>${e.budget_id || '—'}</td>
       <td>${e.created_by_name}</td>
       <td>${statusBadgeHTML(e.status)}</td>
     </tr>`).join('')}</tbody></table>`;
@@ -1379,7 +1615,7 @@ function buildSingleEventReportHTML(e) {
       <div class="row"><span class="lbl">Date</span><span class="val">${e.date}</span></div>
       <div class="row"><span class="lbl">Time Slot</span><span class="val">${e.time_slot}</span></div>
       <div class="row"><span class="lbl">Hall</span><span class="val">${e.hall_name}</span></div>
-      <div class="row"><span class="lbl">Budget</span><span class="val" style="color:#d97706">₹${Number(e.budget).toLocaleString()}</span></div>
+      <div class="row"><span class="lbl">Budget ID</span><span class="val" style="color:#d97706">${e.budget_id || '—'}</span></div>
       <div class="row"><span class="lbl">Organizer</span><span class="val">${e.created_by_name}</span></div>
       <div class="row"><span class="lbl">Status</span><span class="val">${statusBadgeHTML(e.status)}</span></div>
       ${e.description ? `<div class="row"><span class="lbl">Description</span><span class="val">${e.description}</span></div>` : ''}
