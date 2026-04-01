@@ -522,6 +522,10 @@ async function renderNewEvent() {
             <input id="evDate" type="date" min="${new Date().toISOString().split('T')[0]}" style="border-color:#f59e0b">
           </div>
           <div class="field">
+            <label>Duration (No. of Days) *</label>
+            <input id="evDays" type="number" min="1" value="1" style="border-color:#10b981">
+          </div>
+          <div class="field">
             <label>Time Slot *</label>
             <select id="evSlot" style="border-color:#0ea5e9">
               <option>9:00 AM - 12:00 PM</option>
@@ -562,24 +566,39 @@ async function renderNewEvent() {
         </div>
         <div class="wizard-nav">
           <button class="btn btn-outline" onclick="navigateTo('my-events')">✕ Cancel</button>
-          <button class="btn btn-primary" onclick="gotoStep(2)">Next: Hall →</button>
+          <button class="btn btn-primary" onclick="proceedToHalls()">Proceed to Hall Selection →</button>
         </div>
       </div>
 
       <!-- PAGE 2 -->
       <div class="wpage" id="wpage2" style="display:none">
-        <div style="font-size:0.82rem;color:#0369a1;font-weight:600;margin-bottom:8px">
-          💡 Click cards to select halls. You can select multiple halls.
+        <div class="section-header" style="margin-bottom:12px">
+          <div>
+            <div style="font-size:0.95rem;font-weight:800;color:#1e40af">🏨 Select Your Venue(s)</div>
+            <div style="font-size:0.78rem;color:#64748b;margin-top:2px">Choose one or more halls for your event. Use the <strong>Multiple Selection</strong> mode for complex bookings.</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-outline btn-sm" id="multiSelectToggle" onclick="toggleMultiSelectMode()">
+              <span id="multiSelectIcon">🔘</span> <span id="multiSelectLabel">Enable Multi-Select</span>
+            </button>
+          </div>
         </div>
         <div id="hallSuggestionBanner" style="display:none" class="suggest-banner"></div>
         <div id="hallGrid" class="hall-select-grid" style="margin-top:8px">
           ${availHalls.map(h => hallSelectCard(h)).join('')}
         </div>
         <input type="hidden" id="evHall">
-        <div id="hallSelectedDisplay" style="margin-top:12px;display:none;padding:12px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);border-radius:12px;border:1.5px solid #a7f3d0">
-          <strong style="color:#065f46">✓ Selected Halls:</strong>
-          <span id="hallSelectedNames" style="color:#0369a1;margin-left:8px"></span>
-          <span id="hallTotalCapacity" style="float:right;color:#7c3aed;font-weight:700"></span>
+        <div id="hallSelectedDisplay" style="margin-top:16px;display:none;padding:16px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:14px;border:1.5px solid #7dd3fc;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:0.7rem;font-weight:800;color:#0369a1;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Selected Venues</div>
+              <div id="hallSelectedNames" style="color:#0c4a6e;font-weight:600;font-size:0.95rem"></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:0.7rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Combined Capacity</div>
+              <div id="hallTotalCapacity" style="color:#6d28d9;font-weight:800;font-size:1.15rem"></div>
+            </div>
+          </div>
         </div>
         <div class="wizard-nav">
           <button class="btn btn-outline" onclick="gotoStep(1)">← Back</button>
@@ -622,6 +641,9 @@ function resetNewEventForm() {
 }
 
 function gotoStep(n) {
+  // If moving to step 2, validate step 1 first
+  if (n === 2 && !validateStep1()) return;
+
   for (let i = 1; i <= 4; i++) {
     const pg = document.getElementById('wpage' + i);
     const ws = document.getElementById('ws' + i);
@@ -630,25 +652,93 @@ function gotoStep(n) {
   }
 }
 
+function validateStep1() {
+  const title = v('evTitle'), date = v('evDate'), coord = v('evCoord'), count = v('evCount');
+  if (!title) { showToast('Event Title is required', 'error'); return false; }
+  if (!date) { showToast('Please select an Event Date', 'error'); return false; }
+  if (!coord) { showToast('Event Coordinator is required', 'error'); return false; }
+  if (!count || parseInt(count) <= 0) { showToast('Please enter expected attendance', 'error'); return false; }
+  return true;
+}
+
+function proceedToHalls() {
+  if (validateStep1()) {
+    gotoStep(2);
+  }
+}
+
 
 // ─── SCHOOL / DEPT PICKER ──────────────────────────────────────────────────
 function buildSchoolPicker(hierarchy) {
   if (!hierarchy || typeof hierarchy !== 'object') return '<em style="color:var(--muted)">No schools found</em>';
-  return Object.entries(hierarchy).map(([school, depts]) => `
-    <div class="school-block" id="sb_${btoa(school).replace(/=/g,'').slice(0,8)}">
-      <label class="school-label">
-        <input type="checkbox" class="school-chk" value="${school}"
-          onchange="toggleSchool(this,'${school.replace(/'/g,"\'")}')">
-        <span class="school-name">🏫 ${school}</span>
-      </label>
-      <div class="dept-list" id="dl_${btoa(school).replace(/=/g,'').slice(0,8)}" style="display:none">
+  return Object.entries(hierarchy).map(([school, depts]) => {
+    const schoolId = btoa(school).replace(/=/g,'').slice(0,8);
+    return `
+    <div class="school-card" id="sb_${schoolId}">
+      <div class="school-card-header" onclick="toggleSchoolUI('${schoolId}')">
+        <label class="school-checkbox-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" class="school-chk" value="${school}" onchange="onSchoolCheck(this,'${schoolId}')">
+          <span class="school-card-title">🏫 ${school}</span>
+        </label>
+        <span class="school-exp-icon" id="exp_${schoolId}">▾</span>
+      </div>
+      <div class="dept-grid" id="dl_${schoolId}" style="display:none">
         ${depts.map(dep => `
-          <label class="dept-label">
-            <input type="checkbox" class="dept-chk" data-school="${school.replace(/"/g,'&quot;')}" value="${dep}">
-            <span>${dep}</span>
+          <label class="dept-chip-label">
+            <input type="checkbox" class="dept-chk" data-school="${school.replace(/"/g,'&quot;')}" value="${dep}" onchange="updateSchoolCheckState('${schoolId}')">
+            <span class="dept-chip-text">${dep}</span>
           </label>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+function toggleSchoolUI(id) {
+  const dl = document.getElementById('dl_' + id);
+  const exp = document.getElementById('exp_' + id);
+  if (dl) {
+    const isHidden = dl.style.display === 'none';
+    dl.style.display = isHidden ? 'grid' : 'none';
+    if(exp) exp.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0)';
+  }
+}
+
+function onSchoolCheck(chk, id) {
+  const dl = document.getElementById('dl_' + id);
+  if (dl) {
+    if (chk.checked && dl.style.display === 'none') toggleSchoolUI(id);
+  }
+}
+
+let _multiSelectMode = false;
+function toggleMultiSelectMode() {
+  _multiSelectMode = !_multiSelectMode;
+  const btn = document.getElementById('multiSelectToggle');
+  const label = document.getElementById('multiSelectLabel');
+  const icon = document.getElementById('multiSelectIcon');
+  
+  if (_multiSelectMode) {
+    btn.classList.replace('btn-outline', 'btn-primary');
+    label.textContent = 'Multi-Select Active';
+    icon.textContent = '✔️';
+    showToast('You can now select multiple halls', 'info');
+  } else {
+    btn.classList.replace('btn-primary', 'btn-outline');
+    label.textContent = 'Enable Multi-Select';
+    icon.textContent = '🔘';
+    // Clear all but the first selected if desired, or just leave it
+  }
+}
+
+function updateSchoolCheckState(id) {
+  const dl = document.getElementById('dl_' + id);
+  const schoolChk = document.querySelector(`#sb_${id} .school-chk`);
+  if (dl && schoolChk) {
+    const total = dl.querySelectorAll('.dept-chk').length;
+    const checked = dl.querySelectorAll('.dept-chk:checked').length;
+    schoolChk.checked = checked === total && total > 0;
+    schoolChk.indeterminate = checked > 0 && checked < total;
+  }
 }
 
 function toggleSchool(chk, school) {
@@ -705,6 +795,11 @@ function hallSelectCard(h) {
 let _selectedHalls = {};
 
 function selectHall(hid, hname, hcap) {
+  // If not in multi-select mode, clear existing selections first
+  if (!_multiSelectMode) {
+    _selectedHalls = {};
+  }
+
   // Toggle selection
   if (_selectedHalls[hid]) {
     delete _selectedHalls[hid];
@@ -772,7 +867,7 @@ function reqRow(item) {
   return `
   <div class="req-row">
     <span class="req-name">${item.name}</span>
-    <span class="req-avail" style="text-align:center">${item.available_qty}</span>
+    <span class="req-avail" style="text-align:center;visibility:hidden">---</span>
     <input class="item-qty-input" type="number" min="0" value="0" id="qty_${item.id}" placeholder="0">
   </div>`;
 }
@@ -780,35 +875,45 @@ function reqRow(item) {
 function inventoryRequestRow(item) {
   return `<div class="item-row">
     <div class="item-row-name">${item.name}</div>
-    <div class="item-avail">Avail: <strong>${item.available_qty}</strong></div>
+    <div class="item-avail" style="visibility:hidden">---</div>
     <input class="item-qty-input" type="number" min="0" value="0" id="qty_${item.id}" placeholder="0">
   </div>`;
 }
+
 async function submitNewEvent() {
   const title = v('evTitle'), date = v('evDate'), time_slot = v('evSlot'), hall_id = v('evHall'), budget_id = v('evBudget');
   const coordinator = v('evCoord'), expected_count = v('evCount');
+  const days = parseInt(v('evDays') || 1);
+  
   if (!title || !date) { showToast('Please fill Event Title and Date', 'error'); return; }
   if (!hall_id) { showToast('Please select at least one Hall on step 2', 'error'); return; }
   if (!coordinator) { showToast('Please enter the Event Coordinator name', 'error'); return; }
+  
   const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value === 'yes';
   const inventory = await api('/api/inventory');
   const items = inventory.map(i => ({ item_id: i.id, qty: parseInt(document.getElementById('qty_' + i.id)?.value || 0) })).filter(i => i.qty > 0);
-  // Compute hall_name from selected halls
-  const selectedHallList = Object.values(_selectedHalls || {});
-  const hall_name = selectedHallList.map(h => h.name).join(', ') || hall_id;
   const departments = getSelectedDepartments();
+  
   const body = {
-    title, date, time_slot, hall_id, hall_name, budget_id,
-    description: v('evDesc'), coordinator, expected_count: parseInt(expected_count) || 0,
+    title, date, days, time_slot, hall_id, 
+    expected_count: parseInt(expected_count) || 0, 
+    coordinator, budget_id,
+    description: v('evDesc'),
+    departments,
     has_intro_video: getRadio('evIntro'),
     has_dance: getRadio('evDance'),
     has_photos: getRadio('evPhotos'),
     has_video: getRadio('evVideo'),
-    departments, items
+    items
   };
-  await api('/api/events', 'POST', body);
-  showToast('Event proposal submitted successfully!', 'success');
-  navigateTo('my-events');
+  
+  try {
+    await api('/api/events', 'POST', body);
+    showToast('Proposal submitted successfully!', 'success');
+    navigateTo('my-events');
+  } catch (e) {
+    showToast(e.message || 'Error submitting proposal', 'error');
+  }
 }
 
 // ─── ALL EVENTS ───────────────────────────────────────────────────────────────

@@ -576,7 +576,8 @@ def check_available_halls(data: JsonDict, event_date: str, slot: str, days: int 
     required_dates = {(start_date + timedelta(days=i)).isoformat() for i in range(days)}
     busy_halls: set[str] = set()
     for e in data['events']:
-        if compute_event_status(e) != 'rejected' and timeslot_overlap(e.get('time_slot', ''), slot):
+        status = compute_event_status(e)
+        if status not in ('rejected', 'cancelled') and timeslot_overlap(e.get('time_slot', ''), slot):
             e_start_str = e.get('date')
             e_days = int(e.get('days', 1))
             if e_start_str:

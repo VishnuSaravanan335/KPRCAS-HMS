@@ -1,0 +1,28 @@
+/* --- BASE DESIGN TOKENS & RESET --- */
+:root {
+  --primary: #6366f1;
+  --primary-lt: #eff6ff;
+  --secondary: #0ea5e9;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --green: #10b981;
+  --green-lt: #ecfdf5;
+  --gold: #f59e0b;
+  --gold-lt: #fffbeb;
+  --red: #ef4444;
+  --red-lt: #fef2f2;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+* { box-sizing: border-box; }
