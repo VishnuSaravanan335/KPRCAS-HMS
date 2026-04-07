@@ -11,14 +11,52 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = 'kprhub_secret_2024'
 
+# ─── FILE UPLOAD CONFIGURATION ───────────────────────────────────────────────
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max
+
 # ─── SMTP CONFIGURATION ────────────────────────────────────────────────────────
 # WARNING: In a production environment, use environment variables for security.
 MAIL_SERVER = "smtp.gmail.com"
 MAIL_PORT = 587
 MAIL_USE_TLS = True
 MAIL_USERNAME = "hmskprcas@gmail.com"
-MAIL_PASSWORD = "pxxm ngbc eptp fipr"
+MAIL_PASSWORD = "xhyw zskg flan urxt"
 MAIL_DEFAULT_SENDER = "hmskprcas@gmail.com"
+
+# --- IT SUPPORT EMAIL CONFIG ---
+IT_MAIL_USERNAME = "itsupportkprcas@gmail.com"
+IT_MAIL_PASSWORD = "qiot jeas ukhb vaf"
+
+# --- RECEPTION EMAIL CONFIG ---
+REC_MAIL_USERNAME = "receptionsupportkprcas@gmail.com"
+REC_MAIL_PASSWORD = "wjwd knqj iwtt gaac"
+
+def send_smtp_email(sender_email: str, sender_password: str, recipients: List[str], subject: str, html_content: str) -> Tuple[bool, str]:
+    """Helper to send SMTP email from any account."""
+    if not sender_password:
+        return False, "SMTP password not configured."
+    
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = ", ".join(recipients)
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        return True, "Email sent successfully."
+    except Exception as e:
+        print(f"SMTP error ({sender_email}): {e}")
+        return False, str(e)
+
+# --- ADMIN EMAILS ---
 
 def get_admin_emails() -> List[str]:
     """Helper to fetch all admin email addresses from data.json."""
@@ -39,13 +77,19 @@ def send_event_notification(event_data):
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
     
+    # Notify admins, booker, IT, and Reception
     recipients = admins
     if booker_email: recipients.append(booker_email)
+    recipients.append(IT_MAIL_USERNAME)
+    recipients.append(REC_MAIL_USERNAME)
+    
+    # Filter duplicates and empty strings
+    recipients = list(set([r for r in recipients if r and "@" in r]))
     
     if not recipients:
         recipients = ["23bcomca131@kprcas.ac.in"]
 
-    if not MAIL_PASSWORD or MAIL_PASSWORD == "YOUR_APP_PASSWORD":
+    if not MAIL_PASSWORD:
         return False, "SMTP password not configured."
 
     msg = MIMEMultipart("alternative")
@@ -57,42 +101,31 @@ def send_event_notification(event_data):
     <html>
     <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
-            <h2 style="color: #4f46e5; margin-bottom: 20px;">KPR HUB - New Event Proposal</h2>
-            <p>A new event has been proposed by <strong>{event_data['created_by_name']}</strong>.</p>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <tr><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #4f46e5;">Event Name:</td><td>{event_data.get('title')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Coordinator:</td><td>{event_data.get('coordinator')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Proposed By:</td><td>{event_data.get('created_by_name')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Time:</td><td>{event_data.get('time_slot')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Date:</td><td>{event_data.get('date')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Venue:</td><td>{event_data.get('hall_name')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4f46e5;">Type:</td><td>{event_data.get('event_type')}</td></tr>
-            </table>
+            <h2 style="color: #4f46e5; margin-bottom: 20px;">KPRCAS HMS - New Booking Request</h2>
+            <p>Dear Team,</p>
+            <p>A new event booking request has been received from <strong>{event_data['created_by_name']}</strong> and is awaiting your review.</p>
+            <div style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #4f46e5;">Booking Details</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #64748b;">Event Name:</td><td>{event_data.get('title')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #64748b;">Coordinator:</td><td>{event_data.get('coordinator')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #64748b;">Date:</td><td>{event_data.get('date')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #64748b;">Venue:</td><td>{event_data.get('hall_name')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #64748b;">Type:</td><td>{event_data.get('event_type')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #64748b;">Resource:</td><td>{event_data.get('resource_person')}</td></tr>
+                </table>
+            </div>
             <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
                 <p style="margin: 0; font-weight: bold; color: #6366f1;">Description:</p>
                 <p style="margin: 5px 0 0;">{event_data['description']}</p>
             </div>
-            <p style="margin-top: 20px; font-size: 0.85rem; color: #64748b;">Please login to the dashboard to review and approve requirements.</p>
+            <p style="margin-top: 20px; font-size: 0.85rem; color: #64748b;">This notification is sent via KPRCAS HMS centralized bridge.</p>
         </div>
     </body>
     </html>
     """
-    msg.attach(MIMEText(html, "html"))
-
-    # Simulation Mode: If password is "vishnu", don't actually hit Gmail
-    if MAIL_PASSWORD == "vishnu":
-        print(f"SIMULATION: New booking email would have been sent to {recipients}")
-        return True, "Simulation: New booking email sent (Mock Mode)"
-
-    try:
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-            server.starttls()
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
-            server.send_message(msg)
-        return True, "Email sent successfully."
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return False, f"Email failed: {str(e)}"
+    # Force real SMTP attempt
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"🔔 New Event Booking: {event_data.get('title')}", html)
 
 def send_approval_notification(event_data, recipient=None):
     """Sends a professional HTML email when an event is approved by the Principal."""
@@ -110,7 +143,7 @@ def send_approval_notification(event_data, recipient=None):
     if not recipients:
         recipients = ["23bcomca131@kprcas.ac.in"]
 
-    if not MAIL_PASSWORD or MAIL_PASSWORD == "YOUR_APP_PASSWORD":
+    if not MAIL_PASSWORD:
         return False, "SMTP password not configured."
 
     msg = MIMEMultipart("alternative")
@@ -122,36 +155,19 @@ def send_approval_notification(event_data, recipient=None):
     <html>
     <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f0fdf4;">
-            <h2 style="color: #16a34a; margin-bottom: 20px;">KPR HMS - Event Approved</h2>
+            <h2 style="color: #16a34a; margin-bottom: 20px;">KPRCAS HMS - Event Approved</h2>
             <p>Your proposal has been <strong>approved</strong> by IT, Reception, and the Principal.</p>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px;">
                 <tr><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #4b5563;">Event Name:</td><td style="color: #1f2937;">{event_data.get('title')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Coordinator:</td><td style="color: #1f2937;">{event_data.get('coordinator')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Proposed By:</td><td style="color: #1f2937;">{event_data.get('created_by_name')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Time:</td><td style="color: #1f2937;">{event_data.get('time_slot')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Date:</td><td style="color: #1f2937;">{event_data.get('date')}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Day:</td><td style="color: #1f2937;">{event_data.get('date')}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Venue:</td><td style="color: #1f2937;">{event_data.get('hall_name')}</td></tr>
             </table>
-            <p style="margin-top: 20px; font-size: 0.9rem; color: #166534; font-weight: 500;">For more details, please check with the KPR HMS. You can now proceed with your event preparations according to the schedule.</p>
+            <p style="margin-top: 20px; font-size: 0.9rem; color: #166534; font-weight: 500;">Please log into KPRCAS HMS to download your receipt and finalize preparations.</p>
         </div>
     </body>
     </html>
     """
-    msg.attach(MIMEText(html, "html"))
-
-    # Simulation Mode: If password is "vishnu", don't actually hit Gmail
-    if MAIL_PASSWORD == "vishnu":
-        print(f"SIMULATION: Approval email would have been sent to {recipient}")
-        return True, "Simulation: Approval email sent (Mock Mode)"
-
-    try:
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-            server.starttls()
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
-            server.send_message(msg)
-        return True, "Approval email sent."
-    except Exception as e:
-        print(f"Failed to send approval email: {e}")
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"✅ Event Approved: {event_data.get('title')}", html)
 
 def send_allocation_complete_notification(event_data, recipient=None):
     """Notify Principal and Booker that IT/Reception allocation is done."""
@@ -161,97 +177,85 @@ def send_allocation_complete_notification(event_data, recipient=None):
     if not recipients:
         recipients = ["23bcomca131@kprcas.ac.in"]
 
-    if MAIL_PASSWORD == "vishnu":
-        print(f"SIMULATION: Allocation complete email for {event_data['title']} to {recipients}")
-        return
-
-    msg = MIMEMultipart()
-    msg["From"] = MAIL_USERNAME
-    msg["To"] = ", ".join(recipients)
-    msg["Subject"] = f"✅ Resource Allocation Complete: {event_data.get('title')}"
-
-    # Hall Booking Logic Explanation:
-    # 1. Date & Timeslot parity check
-    # 2. Duration (Days) overlap check
-    # 3. Conflict detection against existing 'approved' or 'pending' events
-    # 4. Multi-hall booking support (comma-separated IDs)
-
     html = f"""
-    <html>
-    <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
-            <h2 style="color: #6366f1; margin-bottom: 20px;">KPR HMS - Allocation Complete</h2>
-            <p>The technical and reception resources for <strong>{event_data.get('title')}</strong> have been successfully allocated.</p>
-            <p>The proposal has now been moved to the <strong>Principal's Review</strong> stage for final approval.</p>
-            
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px;">
-                <tr><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #4b5563;">Event Name:</td><td>{event_data.get('title')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Coordinator:</td><td>{event_data.get('coordinator')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Date:</td><td>{event_data.get('date')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Venue:</td><td>{event_data.get('hall_name')}</td></tr>
-            </table>
-            
-            <p style="font-size: 0.9rem; color: #64748b;">This is an automated update from the KPR HMS. No further action is required from the department team at this stage.</p>
+    <html><body style="font-family: sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #eef2ff;">
+            <h2 style="color: #4f46e5; margin-bottom: 20px;">KPRCAS HMS - Allocation Finalized</h2>
+            <p>Resources for <strong>{event_data.get('title')}</strong> have been successfully allocated by the respective departments.</p>
+            <p style="font-size: 0.9rem; color: #64748b;">The request is now pending with the <strong>Principal approval desk</strong>.</p>
         </div>
-    </body>
-    </html>
-    """
-    msg.attach(MIMEText(html, "html"))
+    </body></html>"""
 
-    try:
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-            server.starttls()
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        print(f"Failed to send allocation email: {e}")
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"✅ Resource Allocation Complete: {event_data.get('title')}", html)
 
-def send_stage_update_notification(event_data, stage_name):
-    """Notify Booker that a department (IT/Rec) has processed their request."""
+def send_stage_update_notification(event_data, role):
+    """IT or Reception decision notification to Booker and trigger HMS notification."""
     booker_id = event_data.get('created_by')
     data = load_data()
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
     
-    admins = get_admin_emails()
-    recipients = admins
-    if booker_email: recipients.append(booker_email)
-    
-    if not recipients:
-        recipients = ["23bcomca131@kprcas.ac.in"]
+    # We now use the main account for ALL notifications to ensure reliability
+    sender = MAIL_USERNAME
+    pwd = MAIL_PASSWORD
+    dept_name = "IT Support" if role == 'it' else "Reception"
 
-    if MAIL_PASSWORD == "vishnu":
-        print(f"SIMULATION: Stage update for {event_data['title']} to {recipients}")
-        return
+    # Specific requirement: If IT approves, notify User and Reception
+    if role == 'it':
+        subject = f"✅ IT Requirements Approved: {event_data['title']}"
+        recipients = [REC_MAIL_USERNAME]
+        if booker_email: recipients.append(booker_email)
+        
+        html = f"""
+        <html><body style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f0fdf4;">
+                <h2 style="color: #10b981;">IT Department Approval</h2>
+                <p>The <strong>IT Support</strong> department has approved the requirements for your event <strong>{event_data['title']}</strong>.</p>
+                <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0;">
+                    <p><strong>Event Details:</strong></p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>📅 Date:</strong> {event_data.get('date')}</li>
+                        <li><strong>🏛️ Venue:</strong> {event_data.get('hall_name')}</li>
+                    </ul>
+                </div>
+                <p style="font-size: 0.9rem; color: #64748b;">The request is now moving to the next stage of approval.</p>
+            </div>
+        </body></html>"""
+        send_smtp_email(sender, pwd, recipients, subject, html)
+    else:
+        # Standard notification for Reception or other roles
+        subject = f"🔄 Requirement Update: {dept_name} - {event_data['title']}"
+        html = f"""
+        <html><body style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+                <h2 style="color: #6366f1;">{dept_name} Update</h2>
+                <p>The <strong>{dept_name}</strong> department has processed your event requirements for <strong>{event_data['title']}</strong>.</p>
+                <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0;">
+                    <p style="margin: 0;"><strong>Status:</strong> <span style="font-weight: 700; color: #10b981;">Processed & Allocated</span></p>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9rem; color: #64748b;">This notification is sent via the KPRCAS HMS system bridge.</p>
+            </div>
+        </body></html>"""
+        if booker_email:
+            send_smtp_email(sender, pwd, [booker_email], subject, html)
 
-    msg = MIMEMultipart()
-    msg["From"] = MAIL_USERNAME
-    msg["To"] = ", ".join(recipients)
-    msg["Subject"] = f"🔄 Stage Completed: {stage_name.upper()} - {event_data.get('title')}"
-
-    html = f"""
-    <html>
-    <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
-            <h2 style="color: #6366f1; margin-bottom: 20px;">KPR HMS - Booking Update</h2>
-            <p>The <strong>{stage_name.upper()}</strong> department has successfully processed the requirements for: <strong>{event_data.get('title')}</strong>.</p>
-            <p>Your booking is progressing through the system. You will receive another notification once the final decision is made.</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="font-size: 0.85rem; color: #64748b;">Event Date: {event_data.get('date')}<br>Venue: {event_data.get('hall_name')}</p>
-        </div>
-    </body>
-    </html>
-    """
-    msg.attach(MIMEText(html, "html"))
-
-    try:
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-            server.starttls()
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        print(f"Failed to send stage update email: {e}")
-        return False, f"Email failed: {str(e)}"
+    # If both IT and Reception are done, send final details from HMS account
+    status = compute_event_status(event_data)
+    if status == 'principal_review':
+        hms_subject = f"📢 Final Booking Details: {event_data['title']}"
+        hms_html = f"""
+        <html><body style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #eef2ff;">
+                <h2 style="color: #4f46e5;">KPRCAS HMS - Final Booking Brief</h2>
+                <p>IT and Reception have approved the requirements. Here are the final details for <strong>{event_data['title']}</strong>.</p>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <tr><td style="padding: 8px; font-weight: bold; color: #64748b;">Venue:</td><td style="padding: 8px;">{event_data.get('hall_name')}</td></tr>
+                    <tr><td style="padding: 8px; font-weight: bold; color: #64748b;">Date:</td><td style="padding: 8px;">{event_data.get('date')}</td></tr>
+                </table>
+                <p style="margin-top: 20px; font-size: 0.85rem; color: #64748b; text-align: center;">Automated Stage Completion - KPRCAS HMS</p>
+            </div>
+        </body></html>"""
+        send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, [IT_MAIL_USERNAME, REC_MAIL_USERNAME], hms_subject, hms_html)
 
 # ─── TYPE ALIASES ─────────────────────────────────────────────────────────────
 
@@ -530,15 +534,39 @@ def get_halls() -> Response:
 @app.route('/api/halls', methods=['POST'])
 @roles_required('admin')
 def create_hall() -> RouteResp:
-    d: JsonDict = get_request_json()
     data = load_data()
+    
+    # Handle both multipart/form-data and JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        name = request.form.get('name')
+        capacity = request.form.get('capacity')
+        hall_type = request.form.get('type')
+        photo_file = request.files.get('photo')
+    else:
+        d = get_request_json()
+        name = d.get('name')
+        capacity = d.get('capacity')
+        hall_type = d.get('type')
+        photo_file = None
+
+    if not name or not capacity:
+        return jsonify({"error": "Name and capacity are required"}), 400
+
+    photo_path = ""
+    if photo_file and photo_file.filename:
+        ext = photo_file.filename.rsplit('.', 1)[-1].lower() if '.' in photo_file.filename else ''
+        safe_name = f"hall_{uuid.uuid4().hex[:8]}.{ext}"
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
+        photo_file.save(save_path)
+        photo_path = f'/static/uploads/{safe_name}'
+
     hall: JsonDict = {
         "id":       "h" + str(uuid.uuid4()).split('-')[0],
-        "name":     d['name'],
-        "capacity": int(d['capacity']),
-        "type":     d['type'],
+        "name":     name,
+        "capacity": int(capacity),
+        "type":     hall_type,
         "locked":   False,
-        "image":    d.get('image', '')
+        "image":    photo_path or (request.get_json(silent=True) or {}).get('image', '')
     }
     data['halls'].append(hall)
     save_data(data)
@@ -618,12 +646,31 @@ def get_available_halls() -> RouteResp:
 @app.route('/api/halls/<hid>', methods=['PUT'])
 @roles_required('admin')
 def update_hall(hid: str) -> RouteResp:
-    d: JsonDict = get_request_json()
     data = load_data()
     hall: Optional[JsonDict] = next((h for h in data['halls'] if h['id'] == hid), None)
     if not hall:
         return jsonify({"error": "Not found"}), 404
-    hall.update({k: v for k, v in d.items() if k in ('name', 'capacity', 'type', 'locked', 'image')})
+
+    # Handle both multipart/form-data and JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        hall['name'] = request.form.get('name', hall['name'])
+        if request.form.get('capacity'):
+            hall['capacity'] = int(request.form.get('capacity'))
+        hall['type'] = request.form.get('type', hall['type'])
+        if request.form.get('locked'):
+            hall['locked'] = request.form.get('locked').lower() == 'true'
+        
+        photo_file = request.files.get('photo')
+        if photo_file and photo_file.filename:
+            ext = photo_file.filename.rsplit('.', 1)[-1].lower() if '.' in photo_file.filename else ''
+            safe_name = f"hall_{uuid.uuid4().hex[:8]}.{ext}"
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
+            photo_file.save(save_path)
+            hall['image'] = f'/static/uploads/{safe_name}'
+    else:
+        d = get_request_json()
+        hall.update({k: v for k, v in d.items() if k in ('name', 'capacity', 'type', 'locked', 'image')})
+        
     save_data(data)
     return jsonify(hall)
 
@@ -737,7 +784,37 @@ def create_event() -> RouteResp:
     data = load_data()
     if data['settings']['portal_locked']:
         return jsonify({"error": "Portal is locked"}), 403
-    d: JsonDict = get_request_json()
+    # Support both JSON (legacy) and multipart/form-data (new, with agenda)
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        import json as _json
+        d: JsonDict = {k: v for k, v in request.form.items()}
+        # Parse JSON-encoded fields sent as form strings
+        for field in ('items', 'departments'):
+            if field in d and isinstance(d[field], str):
+                try:
+                    d[field] = _json.loads(d[field])
+                except Exception:
+                    d[field] = []
+        for field in ('has_intro_video', 'has_dance', 'has_photos', 'has_video'):
+            d[field] = d.get(field, 'false').lower() == 'true'
+
+        # Handle agenda file
+        agenda_file = request.files.get('agenda')
+        agenda_path = None
+        if agenda_file and agenda_file.filename:
+            ext = agenda_file.filename.rsplit('.', 1)[-1].lower() if '.' in agenda_file.filename else ''
+            if ext in ALLOWED_EXTENSIONS:
+                safe_name = f"{uuid.uuid4().hex}_{uuid.uuid4().hex[:8]}.{ext}"
+                save_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
+                agenda_file.save(save_path)
+                agenda_path = f'/static/uploads/{safe_name}'
+            else:
+                return jsonify({"error": "Invalid file type. Allowed: pdf, doc, docx, ppt, pptx, txt"}), 400
+        else:
+            return jsonify({"error": "Agenda file is required"}), 400
+    else:
+        d = get_request_json()
+        agenda_path = d.get('agenda_path', None)
     
     hall_ids = [h.strip() for h in str(d.get('hall_id', '')).split(',') if h.strip()]
     if not hall_ids:
@@ -746,10 +823,17 @@ def create_event() -> RouteResp:
     available_halls = check_available_halls(data, d['date'], d['time_slot'], int(d.get('days', 1)))
     available_ids = [h['id'] for h in available_halls]
     
-    if not all(hid in available_ids for hid in hall_ids):
-        return jsonify({"error": "One or more selected venues are no longer available for this time slot"}), 400
+    # Proceed even if some halls are potentially booked; Principal/Admin will review.
+    # if not all(hid in available_ids for hid in hall_ids):
+    #     return jsonify({"error": "One or more selected venues are no longer available for this time slot"}), 400
         
     hall_names = [h['name'] for h in data['halls'] if h['id'] in hall_ids]
+    
+    # Handle Custom Classroom
+    custom_class = d.get('custom_classroom')
+    if custom_class:
+        hall_names.append(f"Custom Class ({custom_class})")
+        
     hall_name_str = ', '.join(hall_names)
     ri: List[JsonDict] = []
     for item_req in d.get('items', []):
@@ -779,12 +863,15 @@ def create_event() -> RouteResp:
         "budget_id":          d.get('budget_id', ''),
         "coordinator":        d.get('coordinator', ''),
         "coordinator_phone":  d.get('coordinator_phone', ''),
+        "resource_person":    d.get('resource_person', ''),
         "expected_count":     int(d.get('expected_count', 0)),
         "departments":        d.get('departments', []),  # list of {school, department}
         "has_intro_video":    bool(d.get('has_intro_video', False)),
         "has_dance":          bool(d.get('has_dance', False)),
         "has_photos":         bool(d.get('has_photos', False)),
         "has_video":          bool(d.get('has_video', False)),
+        "special_requirements": d.get('special_requirements', ''),
+        "agenda_path":        agenda_path,
         "requested_items":    ri,
         "created_by":         str(session['user_id']),
         "created_by_name":    str(session['name']),
@@ -999,64 +1086,28 @@ def principal_review(eid: str) -> RouteResp:
 @app.route('/api/events/<eid>/return', methods=['POST'])
 @roles_required('it', 'reception')
 def return_items(eid: str) -> RouteResp:
-    """Mark specific items and quantities as returned."""
+    """Mark ALL items for this department as returned (one-click bulk return)."""
     role: str = str(session['role'])
-    d: JsonDict = get_request_json()
-    items_to_return: List[JsonDict] = d.get('items', []) # Format: [{'item_id': '...', 'qty': 5}, ...]
-    
     data = load_data()
     event: Optional[JsonDict] = next((e for e in data['events'] if e['id'] == eid), None)
     if not event:
         return jsonify({"error": "Not found"}), 404
-        
-    for item_data in items_to_return:
-        target_id = item_data.get('item_id')
-        qty_returned = int(item_data.get('qty', 0))
-        
-        # Find matching item in event requests
-        requested_items = event.get('requested_items')
-        if not isinstance(requested_items, list):
-            continue
-            
-        ri_raw = next((i for i in requested_items if i.get('item_id') == target_id and i.get('dept') == role), None)
-        if not ri_raw:
-            continue
-        ri: dict = cast(dict, ri_raw)
-        
-        if ri.get('dept_approved'):
-            # Update inventory in_use
-            inv_raw = next((i for i in cast(list, data.get('inventory', [])) if i.get('id') == target_id), None)
-            if inv_raw:
-                inv: dict = cast(dict, inv_raw)
-                # We subtract what was returned from in_use
-                previously_returned = int(ri.get('returned_qty', 0))
-                remaining_to_return = int(ri.get('allocated_qty', 0)) - previously_returned
-                
-                # Cap the return qty to what's left
-                actual_return = min(qty_returned, remaining_to_return)
-                
-                if actual_return > 0:
-                    inv['in_use'] = max(0, int(inv.get('in_use', 0)) - actual_return)
-                    ri['returned_qty'] = previously_returned + actual_return
-                    
-                # Mark as fully returned if totals match
-                if int(ri.get('returned_qty', 0)) >= int(ri.get('allocated_qty', 0)):
-                    ri['returned'] = True
-    
-    # Legacy support for "return all" if no items provided
-    if not items_to_return and event:
-        requested_items = event.get('requested_items')
-        if isinstance(requested_items, list):
-            for ri_raw in requested_items:
-                ri: dict = cast(dict, ri_raw)
-                if ri.get('dept') == role and ri.get('dept_approved') and not ri.get('returned'):
-                    inv_raw = next((i for i in cast(list, data.get('inventory', [])) if i.get('id') == ri.get('item_id')), None)
-                    if inv_raw:
-                        inv: dict = cast(dict, inv_raw)
-                        rem = int(ri.get('allocated_qty', 0)) - int(ri.get('returned_qty', 0))
+
+    requested_items = event.get('requested_items')
+    if isinstance(requested_items, list):
+        for ri_raw in requested_items:
+            ri: dict = cast(dict, ri_raw)
+            if ri.get('dept') == role and ri.get('dept_approved') and not ri.get('returned'):
+                inv_raw = next(
+                    (i for i in cast(list, data.get('inventory', [])) if i.get('id') == ri.get('item_id')), None
+                )
+                if inv_raw:
+                    inv: dict = cast(dict, inv_raw)
+                    rem = int(ri.get('allocated_qty', 0)) - int(ri.get('returned_qty', 0))
+                    if rem > 0:
                         inv['in_use'] = max(0, int(inv.get('in_use', 0)) - rem)
-                    ri['returned_qty'] = ri.get('allocated_qty', 0)
-                    ri['returned'] = True
+                ri['returned_qty'] = ri.get('allocated_qty', 0)
+                ri['returned'] = True
 
     save_data(data)
     return jsonify({"ok": True})

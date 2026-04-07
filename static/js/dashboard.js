@@ -24,7 +24,7 @@ function defaultPage() {
 
 // ─── SHELL ────────────────────────────────────────────────────────────────────
 function renderShell() {
-  const rc = { admin: 'role-admin', booker: 'role-booker', it: 'role-it', reception: 'role-reception', principal: 'role-principal' };
+  const rc = { admin: 'badge badge-admin', booker: 'badge badge-booker', it: 'badge badge-it', reception: 'badge badge-reception', principal: 'badge badge-principal' };
   document.getElementById('userInfo').innerHTML = `
     <div class="user-name">${currentUser.name}</div>
     <div class="user-role ${rc[currentUser.role] || ''}">${currentUser.role.toUpperCase()}</div>`;
@@ -44,18 +44,19 @@ function renderShell() {
 function getNavItems() {
   const role = currentUser.role;
   if (role === 'admin') return [
-    { id: 'overview', icon: '📊', label: 'Overview' },
-    { id: 'manage-users', icon: '👥', label: 'Users' },
-    { id: 'manage-halls', icon: '🏛️', label: 'Halls' },
-    { id: 'manage-inventory', icon: '📦', label: 'Inventory' },
-    { id: 'all-events', icon: '📅', label: 'All Events' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
-    { id: 'reports', icon: '📄', label: 'Reports' },
+    { id: 'overview', icon: '📊', label: 'Command Center' },
+    { id: 'manage-users', icon: '👥', label: 'Identity Management' },
+    { id: 'manage-halls', icon: '🏛️', label: 'Venue Catalog' },
+    { id: 'manage-schools', icon: '🏫', label: 'School Hierarchy' },
+    { id: 'manage-inventory', icon: '📦', label: 'System Inventory' },
+    { id: 'all-events', icon: '📅', label: 'Event Master' },
+    { id: 'settings', icon: '⚙️', label: 'Portal Config' },
+    { id: 'reports', icon: '📄', label: 'Intelligence' },
   ];
   if (role === 'booker') return [
-    { id: 'my-events', icon: '📅', label: 'My Events' },
-    { id: 'new-event', icon: '➕', label: 'New Event' },
-    { id: 'reports', icon: '📄', label: 'Reports' },
+    { id: 'my-events', icon: '📅', label: 'My Bookings' },
+    { id: 'new-event', icon: '✨', label: 'Propose Event' },
+    { id: 'reports', icon: '📄', label: 'Personal Reports' },
   ];
   if (role === 'it') return [
     { id: 'it-requests', icon: '🖥️', label: 'Pending Requests' },
@@ -108,6 +109,7 @@ function navigateTo(page) {
     'rec-requests': () => renderDeptRequests('reception'),
     'rec-inventory': () => renderDeptInventory('reception'),
     'rec-returns': () => renderReturns('reception'),
+    'manage-schools': renderManageSchools,
     'pending-events': renderPendingEvents,
   };
   if (routes[page]) routes[page]();
@@ -117,24 +119,44 @@ function navigateTo(page) {
 async function renderOverview() {
   const [stats, events] = await Promise.all([api('/api/stats'), api('/api/events')]);
   
+  const total = stats.total_events || 1;
+  const pApp = Math.round((stats.approved / total) * 100);
+  const pPen = Math.round((stats.pending / total) * 100);
+  const pRej = Math.round((stats.rejected / total) * 100);
+
   document.getElementById('pageContent').innerHTML = `
- 
     ${getUpcomingEventsHtml(events)}
 
-    
-   
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">System Overview</div><div class="section-sub">KPRCAS Event & Inventory Management</div></div>
         <button class="btn btn-report" onclick="navigateTo('reports')">📄 Download Reports</button>
       </div>
-      <div class="stats-row">
-        <div class="stat-card sc-blue"><div class="stat-icon">📅</div><div class="stat-label">Total Events</div><div class="stat-value stat-accent">${stats.total_events}</div><div class="stat-sub">All time</div></div>
-        <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-value stat-green">${stats.approved}</div><div class="stat-sub">Scheduled</div></div>
-        <div class="stat-card sc-gold"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value stat-gold">${stats.pending}</div><div class="stat-sub">Awaiting review</div></div>
-        <div class="stat-card sc-red"><div class="stat-icon">❌</div><div class="stat-label">Rejected</div><div class="stat-value stat-red">${stats.rejected}</div><div class="stat-sub">Not approved</div></div>
-        <div class="stat-card sc-purple"><div class="stat-icon">👥</div><div class="stat-label">Users</div><div class="stat-value stat-purple">${stats.total_users}</div><div class="stat-sub">System accounts</div></div>
-        <div class="stat-card sc-cyan"><div class="stat-icon">🏛️</div><div class="stat-label">Halls</div><div class="stat-value stat-cyan">${stats.total_halls}</div><div class="stat-sub">Venues</div></div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Total Events</div>
+          <div class="stat-value">${stats.total_events}</div>
+          <div class="stat-bar-box"><div class="stat-bar-fill" style="width:100%; background:var(--accent)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-lt);color:var(--green)">✅</div>
+          <div class="stat-label">Approved</div>
+          <div class="stat-value" style="color:var(--green)">${stats.approved}</div>
+          <div class="stat-bar-box"><div class="stat-bar-fill" style="width:${pApp}%; background:var(--green)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--gold-lt);color:var(--gold)">⏳</div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" style="color:var(--gold)">${stats.pending}</div>
+          <div class="stat-bar-box"><div class="stat-bar-fill" style="width:${pPen}%; background:var(--gold)"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--red-lt);color:var(--red)">❌</div>
+          <div class="stat-label">Rejected</div>
+          <div class="stat-value" style="color:var(--red)">${stats.rejected}</div>
+          <div class="stat-bar-box"><div class="stat-bar-fill" style="width:${pRej}%; background:var(--red)"></div></div>
+        </div>
       </div>
     </div>
     <div class="section">
@@ -142,11 +164,83 @@ async function renderOverview() {
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button class="btn btn-outline" onclick="navigateTo('manage-users')">👥 Manage Users</button>
         <button class="btn btn-outline" onclick="navigateTo('manage-halls')">🏛️ Manage Halls</button>
+        <button class="btn btn-outline" onclick="navigateTo('manage-schools')">🏫 Manage Hierarchy</button>
         <button class="btn btn-outline" onclick="navigateTo('manage-inventory')">📦 Inventory</button>
         <button class="btn btn-outline" onclick="navigateTo('all-events')">📅 All Events</button>
         <button class="btn btn-gold" onclick="navigateTo('settings')">⚙️ Portal Settings</button>
       </div>
     </div>`;
+}
+
+// ─── MANAGE SCHOOLS ───────────────────────────────────────────────────────────
+async function renderManageSchools() {
+  const hierarchy = await api('/api/hierarchy');
+  document.getElementById('pageContent').innerHTML = `
+    <div class="section">
+      <div class="section-header">
+        <div><div class="section-title">School Hierarchy</div><div class="section-sub">Manage colleges and departments</div></div>
+        <button class="btn btn-primary" onclick="openAddSchool()">➕ Add School</button>
+      </div>
+      <div class="hierarchy-grid">
+        ${Object.entries(hierarchy).map(([school, depts]) => `
+          <div class="hierarchy-card">
+            <div class="hierarchy-card-header">
+              <div>
+                <div class="hierarchy-school-name">🏫 ${school}</div>
+                <div style="font-size:0.72rem;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:0.05em">${depts.length} Departments</div>
+              </div>
+              <div class="hierarchy-actions">
+                <button class="btn btn-icon" onclick="openAddDept('${school.replace(/'/g, "\\'")}')">➕</button>
+                <button class="btn btn-icon btn-danger" onclick="deleteSchool('${school.replace(/'/g, "\\'")}')">🗑️</button>
+              </div>
+            </div>
+            <div class="hierarchy-depts">
+              ${depts.map(d => `
+                <div class="hierarchy-dept-tag">
+                  ${d} <span class="tag-close" onclick="deleteDept('${school.replace(/'/g, "\\'")}', '${d.replace(/'/g, "\\'")}')">×</span>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+async function openAddSchool() {
+  const name = prompt("Enter School/College Name:");
+  if (!name) return;
+  const hierarchy = await api('/api/hierarchy');
+  if (hierarchy[name]) { showToast('School already exists', 'error'); return; }
+  hierarchy[name] = [];
+  await api('/api/hierarchy', 'PUT', hierarchy);
+  renderManageSchools();
+}
+
+async function openAddDept(school) {
+  const dept = prompt(`Add department to ${school}:`);
+  if (!dept) return;
+  const hierarchy = await api('/api/hierarchy');
+  if (hierarchy[school].includes(dept)) { showToast('Department already exists', 'error'); return; }
+  hierarchy[school].push(dept);
+  await api('/api/hierarchy', 'PUT', hierarchy);
+  renderManageSchools();
+}
+
+async function deleteSchool(school) {
+  showConfirmModal('Delete School', `Delete entire school "${school}" and all its departments?`, async () => {
+    const hierarchy = await api('/api/hierarchy');
+    delete hierarchy[school];
+    await api('/api/hierarchy', 'PUT', hierarchy);
+    renderManageSchools();
+  });
+}
+
+async function deleteDept(school, dept) {
+  showConfirmModal('Remove Department', `Remove department "${dept}" from ${school}?`, async () => {
+    const hierarchy = await api('/api/hierarchy');
+    hierarchy[school] = hierarchy[school].filter(d => d !== dept);
+    await api('/api/hierarchy', 'PUT', hierarchy);
+    renderManageSchools();
+  });
 }
 
 // ─── MANAGE USERS ─────────────────────────────────────────────────────────────
@@ -232,47 +326,47 @@ async function submitEditUser(uid) {
   await api(`/api/users/${uid}`, 'PUT', body); closeModal(); showToast('User updated', 'success'); renderManageUsers();
 }
 async function deleteUser(uid, name) {
-  if (!confirm(`Delete user "${name}"?`)) return;
-  await api(`/api/users/${uid}`, 'DELETE'); showToast('User deleted', 'info'); renderManageUsers();
+  showConfirmModal('Delete User', `Are you sure you want to delete user "${name}"? This action cannot be undone.`, async () => {
+    await api(`/api/users/${uid}`, 'DELETE');
+    showToast('User deleted', 'info');
+    renderManageUsers();
+  });
 }
 
 // ─── MANAGE HALLS ─────────────────────────────────────────────────────────────
 async function renderManageHalls() {
   const halls = await api('/api/halls');
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Halls & Venues</div><div class="section-sub">${halls.length} venues</div></div>
+        <div><div class="section-title">Institutional Venues</div><div class="section-sub">${halls.length} venues managed in catalog</div></div>
         <div class="section-actions">
-          <button class="btn btn-report btn-sm" onclick="downloadReport('halls')">📄 Export</button>
-          <button class="btn btn-primary" onclick="openAddHall()">➕ Add Hall</button>
+          <button class="btn btn-report btn-sm" onclick="downloadReport('halls')">📄 Export Catalog</button>
+          <button class="btn btn-primary" onclick="openAddHall()">➕ Register New Venue</button>
         </div>
       </div>
-      <div class="cards-grid">
+      <div class="hall-grid">
         ${halls.map(h => {
     const img = getHallImage(h);
     return `
-          <div class="hall-card" style="padding:0;overflow:hidden">
-            <div style="height:140px;background-image:url('${img}');background-size:cover;background-position:center;position:relative">
-              <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.65))"></div>
-              <div style="position:absolute;bottom:10px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-end">
-                <div>
-                  <div style="font-weight:800;font-size:0.95rem;color:#fff">${h.name}</div>
-                  <div style="font-size:0.72rem;color:rgba(255,255,255,0.75);font-family:'JetBrains Mono',monospace">${h.type}</div>
-                </div>
-                ${h.locked ? '<span class="badge badge-locked">🔒 Locked</span>' : '<span class="badge badge-available">✓ Available</span>'}
+          <div class="hall-card ${h.locked ? 'locked' : ''}">
+            <div class="hall-header" style="background-image: url('${img}')">
+              <div class="hall-overlay"></div>
+              <span class="status-badge ${h.locked ? 'status-locked' : 'status-active'}">
+                ${h.locked ? '🔒 Locked' : '● Online'}
+              </span>
+            </div>
+            <div class="hall-body">
+              <div class="hall-name">${h.name}</div>
+              <div class="hall-meta">
+                <span class="capacity-tag">👥 ${h.capacity} Seats</span>
+                <span>📍 ${h.type}</span>
               </div>
             </div>
-            <div style="padding:14px 16px">
-              <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:12px">
-                <span class="hall-capacity">${h.capacity}</span><span class="hall-cap-label">seats capacity</span>
-              </div>
-              <div style="display:flex;gap:7px;flex-wrap:wrap">
-                <button class="btn btn-outline btn-sm" onclick="openEditHall('${h.id}')">✏️ Edit</button>
-                <button class="btn ${h.locked ? 'btn-success' : 'btn-gold'} btn-sm" onclick="toggleHallLock('${h.id}',${h.locked})">${h.locked ? '🔓 Unlock' : '🔒 Lock'}</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteHall('${h.id}','${h.name}')">Delete</button>
-              </div>
+            <div class="hall-footer">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditHall('${h.id}')">✏️ Edit</button>
+              <button class="btn ${h.locked ? 'btn-success' : 'btn-gold'} btn-sm" onclick="event.stopPropagation();toggleHallLock('${h.id}',${h.locked})">${h.locked ? '🔓 Unlock' : '🔒 Lock'}</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteHall('${h.id}','${h.name}')" style="grid-column: 1 / -1">🗑️ Remove Venue</button>
             </div>
           </div>`;
   }).join('')}
@@ -280,43 +374,88 @@ async function renderManageHalls() {
     </div>`;
 }
 function openAddHall() {
-  document.getElementById('modalTitle').textContent = 'Add Hall';
+  document.getElementById('modalTitle').textContent = 'Register New Institutional Venue';
   document.getElementById('modalBody').innerHTML = `
-    <div class="form-grid">
-      <div class="field"><label>Hall Name</label><input id="hName" placeholder="Seminar Hall C"></div>
-      <div class="field"><label>Capacity</label><input id="hCap" type="number" placeholder="100"></div>
-      <div class="field"><label>Type</label><select id="hType">${['Seminar', 'Open Air', 'Lab', 'Auditorium', 'Conference'].map(t => `<option>${t}</option>`).join('')}</select></div>
+    <div class="form-grid large-form" style="gap:20px">
+      <div class="field" style="grid-column:1/-1">
+        <label>Venue Name</label>
+        <input id="hName" placeholder="e.g. Main Auditorium / Seminar Hall C">
+      </div>
+      <div class="field">
+        <label>Seating Capacity</label>
+        <input id="hCap" type="number" placeholder="e.g. 150">
+      </div>
+      <div class="field">
+        <label>Classification</label>
+        <select id="hType">
+          ${['Seminar Hall', 'Open Air Theatre (OAT)', 'Lab', 'Auditorium', 'Conference Hall', 'Classroom'].map(t => `<option>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Venue Photograph</label>
+        <input id="hPhoto" type="file" accept="image/*" style="padding:10px; border:2px dashed var(--border); border-radius:12px; width:100%">
+      </div>
     </div>
-    <div class="modal-footer" style="padding:0;margin-top:20px;">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAddHall()">Add Hall</button>
+    <div class="modal-footer" style="padding:0;margin-top:28px">
+      <button class="btn btn-outline" onclick="closeModal()">✕ Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddHall()">✓ Create Venue</button>
     </div>`;
   openModal();
 }
 async function submitAddHall() {
-  const body = { name: v('hName'), capacity: v('hCap'), type: v('hType') };
-  if (!body.name || !body.capacity) { showToast('Fill all fields', 'error'); return; }
-  await api('/api/halls', 'POST', body); closeModal(); showToast('Hall added', 'success'); renderManageHalls();
+  const name = v('hName'), cap = v('hCap'), type = v('hType'), photo = document.getElementById('hPhoto')?.files[0];
+  if (!name || !cap) { showToast('Fill all required fields', 'error'); return; }
+  
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('capacity', cap);
+  fd.append('type', type);
+  if (photo) fd.append('photo', photo);
+
+  await fetch('/api/halls', { method: 'POST', body: fd, credentials: 'include' });
+  closeModal(); showToast('Hall added', 'success'); renderManageHalls();
 }
 function openEditHall(hid) {
   api('/api/halls').then(halls => {
     const h = halls.find(x => x.id === hid);
-    document.getElementById('modalTitle').textContent = 'Edit Hall';
+    document.getElementById('modalTitle').textContent = 'Modify Venue — ' + h.name;
     document.getElementById('modalBody').innerHTML = `
-      <div class="form-grid">
-        <div class="field"><label>Name</label><input id="ehName" value="${h.name}"></div>
-        <div class="field"><label>Capacity</label><input id="ehCap" type="number" value="${h.capacity}"></div>
-        <div class="field"><label>Type</label><select id="ehType">${['Seminar', 'Open Air', 'Lab', 'Auditorium', 'Conference'].map(t => `<option ${t === h.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="form-grid large-form" style="gap:20px">
+        <div class="field" style="grid-column:1/-1">
+          <label>Venue Name</label>
+          <input id="ehName" value="${h.name}">
+        </div>
+        <div class="field">
+          <label>Seating Capacity</label>
+          <input id="ehCap" type="number" value="${h.capacity}">
+        </div>
+        <div class="field">
+          <label>Classification</label>
+          <select id="ehType">
+            ${['Seminar Hall', 'Open Air Theatre (OAT)', 'Lab', 'Auditorium', 'Conference Hall', 'Classroom'].map(t => `<option ${t === h.type ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Update Photograph (leave blank to keep current)</label>
+          <input id="ehPhoto" type="file" accept="image/*" style="padding:10px; border:2px dashed var(--border); border-radius:12px; width:100%">
+        </div>
       </div>
-      <div class="modal-footer" style="padding:0;margin-top:20px;">
-        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitEditHall('${hid}')">Save</button>
+      <div class="modal-footer" style="padding:0;margin-top:28px">
+        <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="submitEditHall('${hid}')">Save Changes</button>
       </div>`;
     openModal();
   });
 }
 async function submitEditHall(hid) {
-  await api(`/api/halls/${hid}`, 'PUT', { name: v('ehName'), capacity: parseInt(v('ehCap')), type: v('ehType') });
+  const fd = new FormData();
+  fd.append('name', v('ehName'));
+  fd.append('capacity', parseInt(v('ehCap')));
+  fd.append('type', v('ehType'));
+  const photo = document.getElementById('ehPhoto')?.files[0];
+  if (photo) fd.append('photo', photo);
+
+  await fetch(`/api/halls/${hid}`, { method: 'PUT', body: fd, credentials: 'include' });
   closeModal(); showToast('Hall updated', 'success'); renderManageHalls();
 }
 async function toggleHallLock(hid, locked) {
@@ -324,8 +463,11 @@ async function toggleHallLock(hid, locked) {
   showToast(locked ? 'Hall unlocked' : 'Hall locked', 'info'); renderManageHalls();
 }
 async function deleteHall(hid, name) {
-  if (!confirm(`Delete hall "${name}"?`)) return;
-  await api(`/api/halls/${hid}`, 'DELETE'); showToast('Hall deleted', 'info'); renderManageHalls();
+  showConfirmModal('Remove Venue', `Permanently remove "${name}" from the institutional catalog?`, async () => {
+    await api(`/api/halls/${hid}`, 'DELETE');
+    showToast('Hall deleted', 'info');
+    renderManageHalls();
+  });
 }
 
 // ─── MANAGE INVENTORY ─────────────────────────────────────────────────────────
@@ -346,8 +488,8 @@ async function renderManageInventory() {
           <thead><tr><th>Name</th><th>Department</th><th>Total Stock</th><th>In Use</th><th>Available</th><th>Actions</th></tr></thead>
           <tbody>
             ${items.map(i => `<tr>
-              <td style="font-weight:600">${i.name}</td>
-              <td><span class="badge badge-${i.dept}">${i.dept.toUpperCase()}</span></td>
+              <td style="font-weight:700">${i.name}</td>
+              <td><span class="badge" style="background-color:${i.dept === 'it' ? '#6366f1' : '#10b981'};color:#fff">${i.dept.toUpperCase()}</span></td>
               <td>${i.stock_qty}</td>
               <td><span style="color:var(--gold);font-weight:700">${i.in_use}</span></td>
               <td><span style="color:var(--green);font-weight:700">${i.available_qty}</span></td>
@@ -399,8 +541,11 @@ async function submitEditInventory(iid) {
   closeModal(); showToast('Stock updated', 'success'); renderManageInventory();
 }
 async function deleteInventory(iid, name) {
-  if (!confirm(`Delete "${name}"?`)) return;
-  await api(`/api/inventory/${iid}`, 'DELETE'); showToast('Item deleted', 'info'); renderManageInventory();
+  showConfirmModal('Delete Item', `Remove "${name}" from system inventory?`, async () => {
+    await api(`/api/inventory/${iid}`, 'DELETE');
+    showToast('Item deleted', 'info');
+    renderManageInventory();
+  });
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
@@ -492,7 +637,12 @@ async function renderNewEvent() {
   document.getElementById('pageContent').innerHTML = `
   <div class="wizard-container">
     <div class="wizard-header">
-      <div class="wizard-title">📋 New Event Booking</div>
+      <div class="wizard-header-top">
+        <div class="wizard-title">📋 New Event Proposal</div>
+        <div style="color: rgba(255,255,255,0.8); font-size: 0.8rem; font-weight: 600; background: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 20px;">
+          Draft Mode
+        </div>
+      </div>
       <div class="wizard-steps">
         <div class="wstep active" id="ws1" onclick="gotoStep(1)"><span>1</span> Details</div>
         <div class="wstep" id="ws2" onclick="gotoStep(2)"><span>2</span> Hall</div>
@@ -510,8 +660,28 @@ async function renderNewEvent() {
             <input id="evTitle" placeholder="e.g. Annual Tech Fest 2025" style="border-color:#0ea5e9">
           </div>
           <div class="field">
+            <label>Event Type *</label>
+            <select id="evType" style="border-color:#6366f1">
+              <option value="Workshop">Workshop</option>
+              <option value="Seminar">Seminar</option>
+              <option value="Conference">Conference</option>
+              <option value="Cultural">Cultural</option>
+              <option value="Guest Lecture">Guest Lecture</option>
+              <option value="Placement">Placement Drive</option>
+              <option value="Meeting">Internal Meeting</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Resource Person / Guest *</label>
+            <input id="evResource" placeholder="Name of Speaker/Guest" style="border-color:#8b5cf6">
+          </div>
+          <div class="field">
             <label>Event Coordinator *</label>
             <input id="evCoord" placeholder="Coordinator name" style="border-color:#10b981">
+          </div>
+          <div class="field">
+            <label>Coordinator Phone *</label>
+            <input id="evPhone" type="tel" placeholder="e.g. 9876543210" style="border-color:#0ea5e9">
           </div>
           <div class="field">
             <label>Expected Attendance *</label>
@@ -527,20 +697,25 @@ async function renderNewEvent() {
           </div>
           <div class="field">
             <label>Time Slot *</label>
-            <select id="evSlot" style="border-color:#0ea5e9">
+            <select id="evSlot" style="border-color:#0ea5e9" onchange="if(this.value==='CUSTOM'){document.getElementById('evCustomSlotBox').style.display='block'}else{document.getElementById('evCustomSlotBox').style.display='none'}">
               <option>9:00 AM - 12:00 PM</option>
               <option>12:00 PM - 3:00 PM</option>
               <option>3:00 PM - 6:00 PM</option>
               <option>9:00 AM - 6:00 PM (Full Day)</option>
+              <option value="CUSTOM">Other / Custom Time...</option>
             </select>
+          </div>
+          <div class="field" id="evCustomSlotBox" style="display:none;grid-column:1/-1">
+            <label>Specify Custom Time *</label>
+            <input id="evCustomSlot" type="text" placeholder="e.g. 10:30 AM - 1:30 PM" style="border-color:#0ea5e9">
           </div>
           <div class="field">
             <label>Budget ID</label>
             <input id="evBudget" type="text" placeholder="e.g. BGT-2025-01" style="border-color:#10b981">
           </div>
           <div class="field" style="grid-column:1/-1">
-            <label>Description</label>
-            <textarea id="evDesc" rows="2" placeholder="Brief description…"></textarea>
+            <label>Event Overview & Purpose</label>
+            <textarea id="evDesc" rows="2" placeholder="Briefly describe the event goal…"></textarea>
           </div>
         </div>
 
@@ -556,7 +731,10 @@ async function renderNewEvent() {
 
         <!-- Special Requirements -->
         <div style="margin-top:18px;border-top:1.5px dashed #bae6fd;padding-top:16px">
-          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Special Requirements</div>
+          <div class="label-premium-header">✨ Special Requirements & Facilities</div>
+          <div class="field" style="margin-bottom:18px">
+            <textarea id="evSpecialReq" rows="3" placeholder="Enter any extra setup, seating, or specific needs here…" style="border-color:#c4b5fd"></textarea>
+          </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
             ${yesNoRow('evIntro','🎬','Intro Video / KPR Anthem')}
             ${yesNoRow('evDance','💃','Dance Performance')}
@@ -564,6 +742,15 @@ async function renderNewEvent() {
             ${yesNoRow('evVideo','🎥','Videography')}
           </div>
         </div>
+          <!-- Agenda Upload - MANDATORY -->
+        <div style="margin-top:18px;border-top:1.5px dashed #fca5a5;padding-top:16px;background:linear-gradient(135deg,#fff7ed,#fef3c7);border-radius:12px;padding:16px;border:1.5px solid #fcd34d">
+          <div style="font-size:0.82rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📎 Event Agenda (Mandatory)</div>
+          <div style="font-size:0.78rem;color:#78350f;margin-bottom:12px">Upload the event agenda document. Without this, the proposal cannot be submitted.</div>
+          <div class="field" style="margin:0">
+            <input id="evAgenda" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" style="border:2px dashed #f59e0b;border-radius:10px;padding:10px;cursor:pointer;background:#fffbeb;width:100%">
+          </div>
+        </div>
+
         <div class="wizard-nav">
           <button class="btn btn-outline" onclick="navigateTo('my-events')">✕ Cancel</button>
           <button class="btn btn-primary" onclick="proceedToHalls()">Proceed to Hall Selection →</button>
@@ -586,7 +773,23 @@ async function renderNewEvent() {
         <div id="hallSuggestionBanner" style="display:none" class="suggest-banner"></div>
         <div id="hallGrid" class="hall-select-grid" style="margin-top:8px">
           ${availHalls.map(h => hallSelectCard(h)).join('')}
+          <!-- Custom Class Card -->
+          <div class="hall-pick-card custom-class-card" id="hcard_custom_class" onclick="selectCustomClass()">
+            <div class="hall-pick-img" style="background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+              🏫
+            </div>
+            <div class="hall-pick-body">
+              <div class="hall-pick-name">Custom Class</div>
+              <div class="hall-pick-type" style="color:var(--purple);background:var(--purple-lt)">Personal Selection</div>
+            </div>
+          </div>
         </div>
+        
+        <div id="customClassInputBox" style="display:none; margin-top:12px; padding:16px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px;">
+          <label style="font-size:0.82rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">Enter Classroom Number *</label>
+          <input id="evCustomClassroom" placeholder="e.g. SF 201, MB 305..." style="width:100%; border:1.5px solid #cbd5e1; border-radius:8px; padding:10px;">
+        </div>
+
         <input type="hidden" id="evHall">
         <div id="hallSelectedDisplay" style="margin-top:16px;display:none;padding:16px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:14px;border:1.5px solid #7dd3fc;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
           <div style="display:flex;justify-content:space-between;align-items:center">
@@ -653,11 +856,17 @@ function gotoStep(n) {
 }
 
 function validateStep1() {
-  const title = v('evTitle'), date = v('evDate'), coord = v('evCoord'), count = v('evCount');
+  const title = v('evTitle'), date = v('evDate'), coord = v('evCoord'), phone = v('evPhone'), count = v('evCount'), res = v('evResource');
   if (!title) { showToast('Event Title is required', 'error'); return false; }
   if (!date) { showToast('Please select an Event Date', 'error'); return false; }
+  if (!res) { showToast('Resource Person is required', 'error'); return false; }
   if (!coord) { showToast('Event Coordinator is required', 'error'); return false; }
+  if (!phone || phone.length < 10) { showToast('Valid Coordinator Phone is required', 'error'); return false; }
   if (!count || parseInt(count) <= 0) { showToast('Please enter expected attendance', 'error'); return false; }
+  const agendaInput = document.getElementById('evAgenda');
+  if (!agendaInput || !agendaInput.files || agendaInput.files.length === 0) {
+    showToast('📎 Agenda document is mandatory — please attach a file', 'error'); return false;
+  }
   return true;
 }
 
@@ -671,22 +880,27 @@ function proceedToHalls() {
 // ─── SCHOOL / DEPT PICKER ──────────────────────────────────────────────────
 function buildSchoolPicker(hierarchy) {
   if (!hierarchy || typeof hierarchy !== 'object') return '<em style="color:var(--muted)">No schools found</em>';
-  return Object.entries(hierarchy).map(([school, depts]) => {
-    const schoolId = btoa(school).replace(/=/g,'').slice(0,8);
+  return Object.entries(hierarchy).map(([school, depts], idx) => {
+    const schoolId = 'sch_' + idx;
     return `
-    <div class="school-card" id="sb_${schoolId}">
-      <div class="school-card-header" onclick="toggleSchoolUI('${schoolId}')">
-        <label class="school-checkbox-wrap" onclick="event.stopPropagation()">
-          <input type="checkbox" class="school-chk" value="${school}" onchange="onSchoolCheck(this,'${schoolId}')">
-          <span class="school-card-title">🏫 ${school}</span>
-        </label>
-        <span class="school-exp-icon" id="exp_${schoolId}">▾</span>
+    <div class="school-selection-card">
+      <div class="school-selection-header" onclick="toggleSchoolUI('${schoolId}')">
+        <div style="display:flex;align-items:center;gap:14px">
+          <input type="checkbox" class="school-chk" value="${school.replace(/"/g,'&quot;')}" 
+            onchange="onSchoolCheck(this,'${schoolId}')" onclick="event.stopPropagation()">
+          <div>
+            <div class="school-selection-name">${school}</div>
+            <div class="school-selection-count">${depts.length} Departments</div>
+          </div>
+        </div>
+        <div class="school-selection-arrow" id="exp_${schoolId}">▼</div>
       </div>
-      <div class="dept-grid" id="dl_${schoolId}" style="display:none">
+      <div class="dept-selection-grid" id="dl_${schoolId}" style="display:none">
         ${depts.map(dep => `
-          <label class="dept-chip-label">
-            <input type="checkbox" class="dept-chk" data-school="${school.replace(/"/g,'&quot;')}" value="${dep}" onchange="updateSchoolCheckState('${schoolId}')">
-            <span class="dept-chip-text">${dep}</span>
+          <label class="dept-selection-item">
+            <input type="checkbox" class="dept-chk" data-school="${school.replace(/"/g,'&quot;')}" value="${dep.replace(/"/g,'&quot;')}" 
+              onchange="updateSchoolCheckState('${schoolId}')">
+            <span>${dep}</span>
           </label>`).join('')}
       </div>
     </div>`;
@@ -794,41 +1008,61 @@ function hallSelectCard(h) {
 // Multi-hall selection tracker
 let _selectedHalls = {};
 
-function selectHall(hid, hname, hcap) {
-  // If not in multi-select mode, clear existing selections first
+function selectCustomClass() {
+  const hid = 'custom_class';
   if (!_multiSelectMode) {
     _selectedHalls = {};
   }
-
-  // Toggle selection
+  
   if (_selectedHalls[hid]) {
     delete _selectedHalls[hid];
+    document.getElementById('customClassInputBox').style.display = 'none';
   } else {
-    _selectedHalls[hid] = { id: hid, name: hname, capacity: parseInt(hcap) };
+    _selectedHalls[hid] = { id: hid, name: 'Custom Class', capacity: 0 };
+    document.getElementById('customClassInputBox').style.display = 'block';
   }
-  // Update card styles
+  updateHallSelectionUI();
+}
+
+function updateHallSelectionUI() {
   document.querySelectorAll('.hall-pick-card').forEach(c => {
     const id = c.id.replace('hcard_', '');
     c.classList.toggle('selected', !!_selectedHalls[id]);
   });
-  // Update hidden input with comma-separated IDs
+  
   const ids = Object.keys(_selectedHalls);
   document.getElementById('evHall').value = ids.join(',');
-  // Update display
+  
   const dispEl = document.getElementById('hallSelectedDisplay');
   const namesEl = document.getElementById('hallSelectedNames');
   const capEl = document.getElementById('hallTotalCapacity');
+  
   if (ids.length === 0) {
     dispEl.style.display = 'none';
   } else {
     dispEl.style.display = 'block';
     namesEl.textContent = Object.values(_selectedHalls).map(h => h.name).join(', ');
     const totalCap = Object.values(_selectedHalls).reduce((s,h) => s + h.capacity, 0);
-    capEl.textContent = 'Total Capacity: ' + totalCap;
-    // Trigger suggestion re-check
+    capEl.textContent = totalCap + ' seats total';
+    
     const count = parseInt(document.getElementById('evCount')?.value || 0);
     if (count > 0) onCountChange(count);
   }
+}
+
+function selectHall(hid, hname, hcap) {
+  if (!_multiSelectMode) {
+    _selectedHalls = {};
+    const customInp = document.getElementById('customClassInputBox');
+    if(customInp) customInp.style.display = 'none';
+  }
+
+  if (_selectedHalls[hid]) {
+    delete _selectedHalls[hid];
+  } else {
+    _selectedHalls[hid] = { id: hid, name: hname, capacity: parseInt(hcap) };
+  }
+  updateHallSelectionUI();
 }
 
 function onCountChange(val) {
@@ -836,31 +1070,62 @@ function onCountChange(val) {
   if (!count) return;
   const banner = document.getElementById('hallSuggestionBanner');
 
-  // Determine suitable halls
-  const suitable = _allHalls.filter(h => !h.locked && h.capacity >= count);
-  suitable.sort((a, b) => a.capacity - b.capacity);
-  const best = suitable[0];
+  const totalSelectedCap = Object.values(_selectedHalls).reduce((s, h) => s + h.capacity, 0);
 
-  if (best) {
-    banner.style.display = 'block';
-    banner.innerHTML = `
-      <span>💡 For <strong>${count} attendees</strong>, we suggest:</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-        ${suitable.slice(0, 4).map(h => `
-          <button class="btn btn-outline btn-sm" onclick="selectHall('${h.id}','${h.name.replace(/'/g, "\\'")}',${h.capacity})" style="font-size:0.78rem">
-            ${h.name} <span style="opacity:0.6">(${h.capacity})</span>
-          </button>`).join('')}
-      </div>`;
-    // Highlight suggested in grid
-    document.querySelectorAll('.hall-pick-card').forEach(c => {
-      const hid = c.id.replace('hcard_', '');
-      c.classList.toggle('suggested', suitable.some(h => h.id === hid));
-    });
+  let suitableHalls = [];
+  let categoryLabel = "";
+
+  if (count <= 60) {
+    suitableHalls = _allHalls.filter(h => !h.locked && (h.type.toLowerCase().includes('lab') || h.type.toLowerCase().includes('classroom') || h.capacity <= 60));
+    categoryLabel = "Classrooms/Labs";
+  } else if (count <= 300) {
+    suitableHalls = _allHalls.filter(h => !h.locked && (h.type.toLowerCase().includes('seminar') || (h.capacity > 60 && h.capacity <= 300)));
+    categoryLabel = "Seminar Halls";
   } else {
-    banner.style.display = 'block';
-    banner.innerHTML = `<span style="color:var(--red)">⚠️ No available hall can accommodate <strong>${count}</strong> attendees. Please contact admin.</span>`;
-    document.querySelectorAll('.hall-pick-card').forEach(c => c.classList.remove('suggested'));
+    suitableHalls = _allHalls.filter(h => !h.locked && (h.type.toLowerCase().includes('auditorium') || h.type.toLowerCase().includes('open air') || h.capacity > 300));
+    categoryLabel = "Auditoriums/OAT";
   }
+
+  suitableHalls.sort((a, b) => a.capacity - b.capacity);
+
+  banner.style.display = 'block';
+  banner.className = 'suggest-banner';
+  
+  if (totalSelectedCap >= count) {
+    banner.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="background:rgba(255,255,255,0.2);padding:8px;border-radius:10px;font-size:1.2rem">✅</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em">Capacity Requirement Met</div>
+          <div style="font-size:0.85rem;margin-top:2px">Your selection (Cap: ${totalSelectedCap}) is sufficient for ${count} attendees.</div>
+        </div>
+      </div>`;
+  } else if (suitableHalls.length > 0) {
+    banner.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="background:rgba(255,255,255,0.2);padding:8px;border-radius:10px;font-size:1.2rem">💡</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;opacity:0.9;letter-spacing:0.05em">Recommended ${categoryLabel}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            ${suitableHalls.slice(0, 4).map(h => `
+              <button class="btn btn-sm" onclick="selectHall('${h.id}','${h.name.replace(/'/g, "\\'")}',${h.capacity})" 
+                style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:0.75rem;font-weight:700;backdrop-filter:blur(6px);padding:4px 10px">
+                ${h.name} <span style="opacity:0.7;font-weight:400;margin-left:4px">(${h.capacity})</span>
+              </button>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  } else {
+    banner.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+    banner.innerHTML = `<div style="display:flex;align-items:center;gap:10px">⚠️ No suitable single hall found for ${count} people. Consider multi-hall selection.</div>`;
+  }
+
+  document.querySelectorAll('.hall-pick-card').forEach(c => {
+    const hid = c.id.replace('hcard_', '');
+    c.classList.toggle('suggested', suitableHalls.some(h => h.id === hid));
+  });
 }
 
 function reqRow(item) {
@@ -881,34 +1146,63 @@ function inventoryRequestRow(item) {
 }
 
 async function submitNewEvent() {
-  const title = v('evTitle'), date = v('evDate'), time_slot = v('evSlot'), hall_id = v('evHall'), budget_id = v('evBudget');
+  const title = v('evTitle'), date = v('evDate'), budget_id = v('evBudget');
+  let time_slot = v('evSlot');
+  if (time_slot === 'CUSTOM') time_slot = v('evCustomSlot');
+  
+  const hall_id = v('evHall');
   const coordinator = v('evCoord'), expected_count = v('evCount');
   const days = parseInt(v('evDays') || 1);
+  const description = v('evDesc');
+  const special_requirements = v('evSpecialReq');
   
   if (!title || !date) { showToast('Please fill Event Title and Date', 'error'); return; }
   if (!hall_id) { showToast('Please select at least one Hall on step 2', 'error'); return; }
   if (!coordinator) { showToast('Please enter the Event Coordinator name', 'error'); return; }
+
+  // Mandatory agenda check
+  const agendaInput = document.getElementById('evAgenda');
+  if (!agendaInput || !agendaInput.files || agendaInput.files.length === 0) {
+    showToast('📎 Agenda is mandatory. Please attach a file.', 'error'); return;
+  }
   
   const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value === 'yes';
   const inventory = await api('/api/inventory');
   const items = inventory.map(i => ({ item_id: i.id, qty: parseInt(document.getElementById('qty_' + i.id)?.value || 0) })).filter(i => i.qty > 0);
   const departments = getSelectedDepartments();
   
-  const body = {
-    title, date, days, time_slot, hall_id, 
-    expected_count: parseInt(expected_count) || 0, 
-    coordinator, budget_id,
-    description: v('evDesc'),
-    departments,
-    has_intro_video: getRadio('evIntro'),
-    has_dance: getRadio('evDance'),
-    has_photos: getRadio('evPhotos'),
-    has_video: getRadio('evVideo'),
-    items
-  };
+  // Use FormData to support file upload
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('date', date);
+  fd.append('days', days);
+  fd.append('time_slot', time_slot);
+  fd.append('hall_id', hall_id);
+  fd.append('expected_count', parseInt(expected_count) || 0);
+  fd.append('event_type', v('evType'));
+  fd.append('resource_person', v('evResource'));
+  fd.append('coordinator', coordinator);
+  fd.append('coordinator_phone', v('evPhone'));
+  fd.append('description', description);
+  fd.append('special_requirements', special_requirements);
+  fd.append('budget_id', budget_id);
+  fd.append('departments', JSON.stringify(departments));
+  fd.append('has_intro_video', getRadio('evIntro'));
+  fd.append('has_dance', getRadio('evDance'));
+  fd.append('has_photos', getRadio('evPhotos'));
+  fd.append('has_video', getRadio('evVideo'));
+  fd.append('items', JSON.stringify(items));
+  fd.append('agenda', agendaInput.files[0]);
+  
+  if (_selectedHalls['custom_class']) {
+    const classNo = v('evCustomClassroom');
+    if (!classNo) { showToast('Please enter the Classroom Number', 'error'); return; }
+    fd.append('custom_classroom', classNo);
+  }
   
   try {
-    await api('/api/events', 'POST', body);
+    const resp = await fetch('/api/events', { method: 'POST', body: fd, credentials: 'include' });
+    if (!resp.ok) { const err = await resp.json(); throw new Error(err.error || 'Submission failed'); }
     showToast('Proposal submitted successfully!', 'success');
     navigateTo('my-events');
   } catch (e) {
@@ -989,33 +1283,42 @@ async function renderDeptRequests(dept) {
 async function renderDeptInventory(dept) {
   const items = await api('/api/inventory?dept=' + dept);
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">${dept === 'it' ? 'IT' : 'Reception'} Inventory</div></div>
+        <div><div class="section-title">${dept === 'it' ? 'IT' : 'Reception'} Command Center — Inventory</div></div>
         <div class="section-actions">
           <button class="btn btn-report btn-sm" onclick="downloadReport('inventory-${dept}')">📄 Export</button>
           <button class="btn btn-primary" onclick="openAddDeptInventory('${dept}')">➕ Add Item</button>
         </div>
       </div>
       <div class="cards-grid">
-        ${items.map(i => {
-    const pct = i.stock_qty > 0 ? Math.round((i.in_use / i.stock_qty) * 100) : 0;
-    return `<div class="inv-card">
+        ${items.map((i, idx) => {
+          const grads = ['grad-violet', 'grad-ocean', 'grad-emerald', 'grad-sunset', 'grad-berry', 'grad-midnight'];
+          const gradClass = grads[idx % grads.length];
+          return `
+          <div class="inv-card ${gradClass}">
             <div class="inv-header">
-              <div><div class="inv-name">${i.name}</div><span class="badge badge-${i.dept}">${i.dept.toUpperCase()}</span></div>
-              <div class="inv-stock"><div class="inv-stock-num">${i.available_qty}</div><div class="inv-stock-label">available</div></div>
+              <div class="inv-name" style="font-weight:800; color:#fff">${i.name}</div>
+              <span class="badge" style="background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3)">${dept.toUpperCase()}</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill ${pct > 80 ? 'high' : ''}" style="width:${pct}%"></div></div>
             <div class="inv-stats">
-              <span>In use: <strong style="color:var(--gold)">${i.in_use}</strong></span>
-              <span>Total: <strong>${i.stock_qty}</strong></span>
+              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
+                <div class="stat-label" style="color:rgba(255,255,255,0.7)">Total</div>
+                <div class="stat-value" style="color:#fff">${i.stock_qty}</div>
+              </div>
+              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
+                <div class="stat-label" style="color:rgba(255,255,255,0.7)">In Use</div>
+                <div class="stat-value" style="color:#fff">${i.in_use}</div>
+              </div>
+              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
+                <div class="stat-label" style="color:rgba(255,255,255,0.7)">Avail</div>
+                <div class="stat-value" style="color:#fff">${i.stock_qty - i.in_use}</div>
+              </div>
             </div>
-            <div style="margin-top:12px">
-              <button class="btn btn-outline btn-sm" onclick="openEditInventory('${i.id}')">Update Stock</button>
+            <div style="margin-top:16px">
+              <button class="btn btn-sm" style="width:100%; justify-content:center; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3)" onclick="openEditInventory('${i.id}')">Modify Stock</button>
             </div>
-          </div>`;
-  }).join('')}
+          </div>`}).join('')}
       </div>
     </div>`;
 }
@@ -1042,59 +1345,118 @@ async function submitAddDeptInventory(dept) {
 async function renderReturns(dept) {
   const events = await api('/api/events');
   const returnable = events.filter(e => e.status === 'approved' && e.requested_items.some(i => i.dept === dept && i.dept_approved && !i.returned));
-  const returned = events.filter(e => e.requested_items.some(i => i.dept === dept && i.returned));
+  const returned = events.filter(e => e.requested_items.some(i => i.dept === dept && i.returned === true));
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Pending Returns</div><div class="section-sub">Mark items as returned after event</div></div>
+        <div><div class="section-title">Pending Equipment Returns</div><div class="section-sub">Collect and mark items as returned after event</div></div>
         <div class="section-actions">
           <button class="btn btn-report btn-sm" onclick="downloadReport('returns-${dept}')">📄 Returns Report</button>
         </div>
       </div>
-      ${returnable.length === 0 ? emptyState('📦', 'Nothing to return', 'All items have been returned.') :
-      `<div class="cards-grid">${returnable.map(e => `
-          <div class="event-card status-approved">
+      ${returnable.length === 0 ? emptyState('📦', 'All items returned', 'Nothing pending for return right now.') :
+      `<div class="cards-grid">${returnable.map(e => {
+        const myItems = e.requested_items.filter(i => i.dept === dept && i.dept_approved && !i.returned);
+        return `
+          <div class="event-card status-approved" style="border-top: 4px solid #10b981;">
             <div class="event-card-header">
               <div class="event-title">${e.title}</div>
-              <span class="badge badge-approved">Approved</span>
+              <span class="badge badge-approved">Return Pending</span>
             </div>
             <div class="event-meta">
               <span class="event-meta-item">📅 ${e.date}</span>
               <span class="event-meta-item">🏛️ ${e.hall_name}</span>
+              <span class="event-meta-item">👤 ${e.created_by_name}</span>
             </div>
-            <div style="margin-top:12px">
-              ${e.requested_items.filter(i => i.dept === dept && i.dept_approved && !i.returned).map(i =>
-        `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);font-size:0.855rem">
-                  <span style="color:var(--text2)">${i.item_name}</span>
-                  <span style="color:var(--gold);font-weight:700">× ${i.allocated_qty}</span>
+            <div style="margin-top:14px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+              <div style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Allocated Items:</div>
+              ${myItems.map(i => `
+                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.85rem;border-bottom:1px solid #f1f5f9">
+                  <span style="font-weight:600;color:#1e293b">${i.item_name}</span>
+                  <span style="color:#10b981;font-weight:700">× ${i.allocated_qty}</span>
                 </div>`).join('')}
             </div>
-            <div class="event-actions">
-              <button class="btn btn-success" onclick="processReturn('${e.id}','${dept}')">✅ Mark as Returned</button>
+            <div style="margin-top:16px">
+              <button class="btn btn-primary" style="width:100%; border-radius:12px; font-weight:800; padding:12px;" onclick="processReturn('${e.id}','${dept}')">
+                ↩️ Confirm All Items Returned
+              </button>
             </div>
-          </div>`).join('')}`}
+          </div>`;
+      }).join('')}`}
     </div>
     ${returned.length > 0 ? `
     <div class="section">
-      <div class="section-header"><div class="section-title">Return History</div></div>
+      <div class="section-header"><div class="section-title">Return Histories</div></div>
       <div class="table-wrap">
-        <table><thead><tr><th>Event</th><th>Date</th><th>Items Returned</th></tr></thead>
+        <table><thead><tr><th>Event</th><th>Date</th><th>Items Returned</th><th>Status</th></tr></thead>
         <tbody>${returned.map(e => `<tr>
           <td style="font-weight:600">${e.title}</td><td>${e.date}</td>
-          <td style="color:var(--muted)">${e.requested_items.filter(i => i.dept === dept && i.returned).map(i => `${i.item_name} ×${i.allocated_qty}`).join(', ')}</td>
+          <td>${e.requested_items.filter(i => i.dept === dept && i.returned).map(i =>
+            `<div style="font-size:0.8rem;color:var(--muted)">${i.item_name} × <span style="font-weight:700;color:var(--green)">${i.returned_qty || i.allocated_qty}</span></div>`
+          ).join('')}</td>
+          <td><span class="badge badge-approved">✅ Returned</span></td>
         </tr>`).join('')}</tbody></table>
       </div>
-    </div>`: ''}`;
+    </div>` : ''}`;
 }
+
 async function processReturn(eid, dept) {
-  await api(`/api/events/${eid}/return`, 'POST');
-  showToast('Items marked as returned', 'success');
+  await api(`/api/events/${eid}/return`, 'POST', {});
+  showToast('All items marked as returned ✅', 'success');
   renderReturns(dept);
 }
 
+function renderProgressChart(e) {
+  const status = e.status;
+  const stages = [
+    { id: 'booked', label: 'Booked' },
+    { id: 'dept_review', label: 'Dept Review' },
+    { id: 'principal_review', label: 'Principal Review' },
+    { id: 'approved', label: 'Approved' }
+  ];
+  
+  let currentIdx = 0;
+  if (status === 'dept_review') currentIdx = 1;
+  else if (status === 'principal_review') currentIdx = 2;
+  else if (status === 'approved') currentIdx = 3;
+  
+  if (status === 'rejected') {
+    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">❌ Event Proposal Rejected</div>`;
+  }
+
+  return `
+  <div class="status-timeline">
+    ${stages.map((stage, idx) => {
+      let cls = '';
+      if (idx < currentIdx) cls = 'completed';
+      else if (idx === currentIdx) cls = 'active';
+      else cls = 'pending';
+      return `
+        <div class="status-step ${cls}">
+          <div class="step-dot">${idx < currentIdx ? '✓' : idx + 1}</div>
+          <div class="step-label">${stage.label}</div>
+        </div>
+      `;
+    }).join('')}
+  </div>`;
+}
+
+function renderMiniStepper(status) {
+    if (status === 'rejected') return '';
+    const steps = status === 'approved' ? 3 : (status === 'principal_review' ? 2 : (status === 'dept_review' ? 1 : 0));
+    return `
+    <div class="mini-stepper">
+        <div class="mini-dot completed"></div>
+        <div class="mini-line ${steps >= 1 ? 'completed' : ''}"></div>
+        <div class="mini-dot ${steps >= 1 ? 'completed' : (steps === 0 ? 'active' : '')}"></div>
+        <div class="mini-line ${steps >= 2 ? 'completed' : ''}"></div>
+        <div class="mini-dot ${steps >= 2 ? 'completed' : (steps === 1 ? 'active' : '')}"></div>
+        <div class="mini-line ${steps >= 3 ? 'completed' : ''}"></div>
+        <div class="mini-dot ${steps >= 3 ? 'completed' : (steps === 2 ? 'active' : '')}"></div>
+    </div>`;
+}
+
 // ─── EVENT CARD ────────────────────────────────────────────────────────────────
-// Compact clickable card — full details only in modal
 function eventCard(e, role) {
   const statusBadge = {
     dept_review: '<span class="badge badge-pending">⏳ Dept Review</span>',
@@ -1126,7 +1488,7 @@ function eventCard(e, role) {
       const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
       primaryBtn = myPending.length > 0 ?
         `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">📦 Allocate</button>` :
-        `<span class="badge badge-approved">✔ Allocated</span>`;
+        `<span class="badge ${role === 'it' ? 'badge-it' : 'badge-reception'}">✔ Allocated</span>`;
     }
     primaryBtn += `<button class="btn btn-report btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')">📄</button>`;
   }
@@ -1135,12 +1497,29 @@ function eventCard(e, role) {
   const isDepRole = (role === 'it' || role === 'reception');
   const myItems = isDepRole ? e.requested_items.filter(i => i.dept === role) : [];
 
+  // Determine school tag
+  let schoolTag = '';
+  if (e.departments && e.departments.length > 0) {
+    const s = e.departments[0].school.toUpperCase();
+    let cls = 'sb-gen';
+    if (s.includes('BCA')) cls = 'sb-bca';
+    else if (s.includes('B.COM') || s.includes('BCOM')) cls = 'sb-bcom';
+    else if (s.includes('BSC')) cls = 'sb-bsc';
+    else if (s.includes('BA')) cls = 'sb-ba';
+    else if (s.includes('BBA')) cls = 'sb-bba';
+    schoolTag = `<div class="school-badge ${cls}">${s}</div>`;
+  }
+
   return `<div class="event-card status-${e.status}" onclick="viewEventDetail('${e.id}')" style="cursor:pointer">
     <div class="event-card-header">
-      <div class="event-title">${e.title}</div>
+      <div style="flex:1">
+        ${schoolTag}
+        <div class="event-title">${e.title}</div>
+      </div>
       ${statusBadge}
     </div>
-    <div class="event-meta">
+    ${renderMiniStepper(e.status)}
+    <div class="event-meta" style="margin-top:10px">
       <span class="event-meta-item">📅 ${e.date}</span>
       <span class="event-meta-item">⏰ ${e.time_slot}</span>
       ${!isDepRole ? `<span class="event-meta-item">🏛️ ${e.hall_name}</span>` : ''}
@@ -1167,6 +1546,7 @@ async function viewEventDetail(eid) {
   const recItems = e.requested_items.filter(i => i.dept === 'reception');
   document.getElementById('modalTitle').textContent = e.title;
   document.getElementById('modalBody').innerHTML = `
+    ${renderProgressChart(e)}
     <div class="detail-section">
       <h4>Event Info</h4>
       <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${e.date}</span></div>
@@ -1296,24 +1676,27 @@ async function submitPrincipalDecision(eid, decision) {
 }
 
 async function cancelEvent(eid) {
-  if (!confirm('Cancel this event proposal?')) return;
-  await api(`/api/events/${eid}/cancel`, 'POST', { reason: 'User cancelled via dashboard' });
-  showToast('Event cancelled', 'info');
-  navigateTo(currentPage);
+  showConfirmModal('Cancel Proposal', 'Are you sure you want to cancel this event proposal?', async () => {
+    await api(`/api/events/${eid}/cancel`, 'POST', { reason: 'User cancelled via dashboard' });
+    showToast('Event cancelled', 'info');
+    navigateTo(currentPage);
+  });
 }
 
 async function adminApproveEvent(eid) {
-  if (!confirm('Approve this event?')) return;
-  await api(`/api/events/${eid}/principal-review`, 'POST', { decision: 'approved', note: 'Approved by Admin via Quick Action' });
-  showToast('Event approved', 'success');
-  navigateTo(currentPage);
+  showConfirmModal('Quick Approve', 'Approve this event immediately without further reviews?', async () => {
+    await api(`/api/events/${eid}/principal-review`, 'POST', { decision: 'approved', note: 'Approved by Admin via Quick Action' });
+    showToast('Event approved', 'success');
+    navigateTo(currentPage);
+  });
 }
 
 async function adminDeleteEvent(eid) {
-  if (!confirm('Permanently delete this event? This action cannot be undone.')) return;
-  await api(`/api/events/${eid}`, 'DELETE');
-  showToast('Event deleted', 'info');
-  navigateTo(currentPage);
+  showConfirmModal('Delete Event', 'Permanently delete this event? This action cannot be undone.', async () => {
+    await api(`/api/events/${eid}`, 'DELETE');
+    showToast('Event deleted', 'info');
+    navigateTo(currentPage);
+  });
 }
 
 async function openEditEventModal(eid) {
@@ -1381,20 +1764,54 @@ async function submitEditEvent(eid) {
 }
 
 function getUpcomingEventsHtml(allEvents) {
-  const upcoming = allEvents.filter(e => e.status === 'approved').sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,3);
+  // Show approved events for all, or pending events if booker
+  let upcoming = allEvents.filter(e => e.status === 'approved');
+  if (currentUser.role === 'booker') {
+      const myPending = allEvents.filter(e => e.status === 'dept_review' || e.status === 'principal_review');
+      upcoming = [...upcoming.slice(0, 3), ...myPending.slice(0, 3)].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 5);
+  } else {
+      upcoming = upcoming.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 4);
+  }
+
   if (upcoming.length === 0) return '';
   return `
-    <div class="section upcoming-widget" style="margin-bottom:20px;">
-      <div class="section-header"><div class="section-title">Upcoming Approved Events</div></div>
-      <div class="cards-grid upcoming-cards">
-        ${upcoming.map(e => `
-          <div class="event-card upcoming-item">
-            <div class="event-title">${e.title}</div>
-            <div class="event-meta-item">📅 ${e.date} &nbsp; ⏰ ${e.time_slot}</div>
-            <div class="event-meta-item">🏛️ ${e.hall_name}</div>
-            <div style="font-size:0.75rem; color:var(--muted); margin-top:6px;">Organizer: ${e.created_by_name}</div>
-          </div>
-        `).join('')}
+    <div class="section upcoming-widget" style="margin-bottom:24px;">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Schedule Overview</div>
+          <div class="section-sub">Recent & Upcoming Events</div>
+        </div>
+      </div>
+      <div class="upcoming-scroll-container">
+        <!-- Total Summary Card -->
+        <div class="upcoming-card-box upcoming-total-card grad-midnight">
+          <div class="total-val">${allEvents.filter(e => e.status === 'approved').length}</div>
+          <div class="total-lbl">Approved Events Total</div>
+        </div>
+
+        ${upcoming.map((e, idx) => {
+            const isMyPending = currentUser.role === 'booker' && (e.status === 'dept_review' || e.status === 'principal_review');
+            const grads = ['grad-violet', 'grad-ocean', 'grad-emerald', 'grad-sunset', 'grad-berry'];
+            const gradClass = grads[idx % grads.length];
+            
+            return `
+            <div class="upcoming-card-box ${gradClass}">
+              <div class="upcoming-card-top">
+                <div class="upcoming-card-title" style="color:#fff; font-weight:800; font-size:1.1rem">${e.title}</div>
+                <div class="upcoming-card-status">${e.status === 'approved' ? '✅' : '⏳'}</div>
+              </div>
+              <div class="upcoming-card-meta" style="color:rgba(255,255,255,0.8); font-size:0.85rem">
+                <div class="meta-line">📅 ${e.date}</div>
+                <div class="meta-line">⌚ ${e.time_slot}</div>
+                <div class="meta-line">🏛️ ${e.hall_name}</div>
+              </div>
+              <div class="upcoming-card-footer" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:12px; margin-top:12px">
+                <div class="organizer-name" style="color:rgba(255,255,255,0.9); font-weight:600">By ${e.created_by_name}</div>
+                ${isMyPending ? `<button class="btn btn-gold btn-xs" onclick="event.stopPropagation();openEditEventModal('${e.id}')">✏️ Edit</button>` : ''}
+              </div>
+            </div>
+            `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -1424,7 +1841,7 @@ async function renderReports() {
         <div class="report-panel-left">
           <div class="report-icon">📊</div>
           <div>
-            <div class="report-panel-title">KPR HUB Report Center</div>
+            <div class="report-panel-title">KPRCAS HMS Report Center</div>
             <div class="report-panel-sub">All reports are generated as print-ready HTML. Use browser Print → Save as PDF.</div>
           </div>
         </div>
@@ -1517,41 +1934,71 @@ function openReportWindow(html, name) {
 function reportStyles() {
   return `
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
       * { box-sizing:border-box; margin:0; padding:0; }
-      body { font-family:'Plus Jakarta Sans',Arial,sans-serif; background:#fff; color:#0f172a; padding:40px; font-size:13px; line-height:1.5; }
-      .rpt-header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:20px; border-bottom:2px solid #2563eb; margin-bottom:28px; }
+      body { 
+        font-family:'Plus Jakarta Sans',Arial,sans-serif; 
+        background:#f8fafc; color:#0f172a; 
+        padding:20mm; font-size:11px; line-height:1.45; 
+        margin:0 auto; max-width:210mm; 
+      }
+      @page { size: A4; margin: 0; }
+      .rpt-header { 
+        display:flex; justify-content:space-between; align-items:flex-end; 
+        padding-bottom:18px; border-bottom:3.5px solid #6366f1; margin-bottom:28px; 
+      }
       .rpt-logo { display:flex; align-items:center; gap:12px; }
-      .rpt-logo-box { width:44px; height:44px; background:linear-gradient(135deg,#2563eb,#1d4ed8); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; color:#fff; }
-      .rpt-brand { font-size:1.3rem; font-weight:800; color:#1e2d4e; }
-      .rpt-brand span { color:#2563eb; }
-      .rpt-meta { text-align:right; color:#64748b; font-size:0.78rem; }
-      .rpt-meta strong { display:block; font-size:0.9rem; color:#0f172a; font-weight:700; margin-bottom:3px; }
-      h2 { font-size:1.15rem; font-weight:800; color:#1e2d4e; margin:24px 0 14px; padding-bottom:8px; border-bottom:1px solid #e2e8f0; }
-      h3 { font-size:0.95rem; font-weight:700; color:#334155; margin:18px 0 10px; }
-      table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:0.82rem; }
-      th { background:#f8fafc; padding:9px 12px; text-align:left; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; border-bottom:2px solid #e2e8f0; }
-      td { padding:9px 12px; border-bottom:1px solid #f1f5f9; color:#334155; }
-      tr:hover td { background:#fafbff; }
-      .badge { display:inline-flex; padding:2px 9px; border-radius:999px; font-size:0.68rem; font-weight:700; border:1px solid; }
-      .b-approved { color:#065f46; background:#d1fae5; border-color:#6ee7b7; }
-      .b-rejected  { color:#991b1b; background:#fee2e2; border-color:#fca5a5; }
-      .b-pending   { color:#92400e; background:#fef3c7; border-color:#fcd34d; }
-      .b-principal { color:#5b21b6; background:#ede9fe; border-color:#c4b5fd; }
-      .b-it        { color:#1e40af; background:#dbeafe; border-color:#93c5fd; }
-      .b-reception { color:#9d174d; background:#fce7f3; border-color:#f9a8d4; }
-      .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
-      .stat-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; }
-      .stat-box .lbl { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-bottom:6px; }
-      .stat-box .val { font-size:1.6rem; font-weight:800; color:#0f172a; }
-      .section-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; margin-bottom:16px; }
-      .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f1f5f9; }
-      .row:last-child { border-bottom:none; }
-      .lbl { color:#64748b; } .val { font-weight:700; }
-      .print-btn { position:fixed; top:20px; right:20px; background:#2563eb; color:#fff; border:none; padding:10px 20px; border-radius:9px; font-family:inherit; font-size:0.875rem; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(37,99,235,0.4); }
-      .print-btn:hover { background:#1d4ed8; }
-      @media print { .print-btn { display:none; } body { padding:20px; } }
-      .footer { margin-top:40px; padding-top:16px; border-top:1px solid #e2e8f0; text-align:center; font-size:0.75rem; color:#94a3b8; }
+      .rpt-logo-box { 
+        width:48px; height:48px; background:linear-gradient(135deg,#6366f1,#4f46e5); 
+        border-radius:12px; display:flex; align-items:center; justify-content:center; 
+        font-weight:800; font-size:1.3rem; color:#fff; box-shadow:0 10px 20px rgba(99,102,241,0.25);
+      }
+      .rpt-brand { font-size:1.4rem; font-weight:800; color:#1e293b; }
+      .rpt-brand span { color:#6366f1; }
+      .rpt-meta { text-align:right; color:#64748b; font-size:0.75rem; }
+      .rpt-meta strong { display:block; font-size:0.95rem; color:#0f172a; font-weight:800; margin-bottom:3px; }
+      h2 { font-size:1.1rem; font-weight:800; color:#1e293b; margin:28px 0 14px; padding-bottom:8px; border-bottom:1.5px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em; }
+      .table-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.02); margin-bottom:20px; }
+      table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+      th { 
+        background:#f1f5f9; padding:10px 14px; text-align:left; font-size:0.65rem; 
+        font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:#475569; 
+        border-bottom:1px solid #e2e8f0; 
+      }
+      td { padding:10px 14px; border-bottom:1px solid #f1f5f9; color:#1e293b; }
+      tr:last-child td { border-bottom:none; }
+      tr:nth-child(even) td { background:#fafbff; }
+      .badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; }
+      .b-approved { color:#059669; background:#dcfce7; }
+      .b-rejected  { color:#dc2626; background:#fee2e2; }
+      .b-pending   { color:#d97706; background:#fef3c7; }
+      .b-principal { color:#6366f1; background:#e0e7ff; }
+      .b-it        { color:#2563eb; background:#dbeafe; }
+      .b-reception { color:#7c3aed; background:#ede9fe; }
+      .stat-box { background:#ffffff; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px 18px; box-shadow:0 2px 4px rgba(0,0,0,0.02); }
+      .stat-box .logo-text {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: -0.3px;
+        text-transform: uppercase;
+      }
+
+      .logo-text span {
+        color: #10b981;
+        margin-left: 2px;
+      }
+      .stat-box .lbl { font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:#64748b; margin-bottom:6px; }
+      .stat-box .val { font-size:1.6rem; font-weight:800; color:#1e293b; }
+      .footer { margin-top:50px; padding-top:20px; border-top:1.5px solid #e2e8f0; text-align:center; font-size:0.7rem; color:#94a3b8; font-weight:600; letter-spacing:0.02em; }
+      .print-btn { 
+        position:fixed; top:20px; right:20px; background:#6366f1; color:#fff; border:none; 
+        padding:12px 24px; border-radius:10px; font-family:inherit; font-size:0.85rem; 
+        font-weight:800; cursor:pointer; box-shadow:0 10px 25px rgba(99,102,241,0.4); z-index:9999;
+        transition: all 0.2s;
+      }
+      .print-btn:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 15px 30px rgba(99,102,241,0.5); }
+      @media print { .print-btn { display:none; } body { padding:10mm; background:#fff; } .table-card { border:none; box-shadow:none; } }
     </style>`;
 }
 
@@ -1575,7 +2022,7 @@ function reportHeader(title, subtitle) {
 }
 
 function reportFooter() {
-  return `<div class="footer">KPR HUB — Event & Inventory Management System · KPRCAS · Confidential</div>`;
+  return `<div class="footer">KPRCAS HMS — Event & Inventory Management System · KPRCAS · Confidential</div>`;
 }
 
 function statusBadgeHTML(status) {
@@ -1601,10 +2048,10 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
     'my-events': events,
     'full-summary': events,
     'principal': events.filter(e => e.principal_decision),
-    'dept-it': events.filter(e => e.requested_items.some(i => i.dept === 'it')),
-    'dept-reception': events.filter(e => e.requested_items.some(i => i.dept === 'reception')),
-    'returns-it': events.filter(e => e.requested_items.some(i => i.dept === 'it' && i.dept_approved)),
-    'returns-reception': events.filter(e => e.requested_items.some(i => i.dept === 'reception' && i.dept_approved)),
+    'dept-it': events.filter(e => e.requested_items.some(i => i.dept === 'it' && i.dept_approved)),
+    'dept-reception': events.filter(e => e.requested_items.some(i => i.dept === 'reception' && i.dept_approved)),
+    'returns-it': events.filter(e => e.status === 'approved' && e.requested_items.some(i => i.dept === 'it' && i.returned_qty > 0)),
+    'returns-reception': events.filter(e => e.status === 'approved' && e.requested_items.some(i => i.dept === 'reception' && i.returned_qty > 0)),
   };
 
   const reportTitles = {
@@ -1615,7 +2062,7 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
     'returns-it': 'IT Returns Report', 'returns-reception': 'Reception Returns Report',
     'principal': 'Principal Decisions Report', 'my-events': 'My Events Report', 'full-summary': 'Full System Summary Report',
   };
-  const title = reportTitles[type] || 'KPR HUB Report';
+  const title = reportTitles[type] || 'KPRCAS HMS Report';
 
   // SUMMARY STATS BLOCK
   if (['all-events', 'approved', 'pending', 'full-summary', 'principal', 'my-events'].includes(type)) {
@@ -1629,18 +2076,20 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
   }
 
   // EVENTS TABLE
-  if (['all-events', 'approved', 'pending', 'my-events', 'full-summary', 'dept-it', 'dept-reception', 'returns-it', 'returns-reception'].includes(type)) {
+  if (['all-events', 'approved', 'pending', 'my-events', 'full-summary', 'dept-it', 'dept-reception'].includes(type)) {
     const evSet = filtered[type] || events;
     body += `<h2>📅 Events (${evSet.length})</h2>
-    <table><thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Hall</th><th>Budget ID</th><th>Organizer</th><th>Status</th></tr></thead>
-    <tbody>${evSet.map(e => `<tr>
-      <td style="font-weight:700">${e.title}</td>
-      <td>${e.date}</td><td style="font-size:0.78rem">${e.time_slot}</td>
-      <td>${e.hall_name}</td>
-      <td>${e.budget_id || '—'}</td>
-      <td>${e.created_by_name}</td>
-      <td>${statusBadgeHTML(e.status)}</td>
-    </tr>`).join('')}</tbody></table>`;
+    <div class="table-card">
+      <table><thead><tr><th>Title</th><th>Date</th><th>Time</th><th>Hall</th><th>Budget ID</th><th>Organizer</th><th>Status</th></tr></thead>
+      <tbody>${evSet.map(e => `<tr>
+        <td style="font-weight:800;color:#1e293b">${e.title}</td>
+        <td>${e.date}</td><td style="font-size:0.7rem;font-family:'JetBrains Mono',monospace">${e.time_slot}</td>
+        <td>${e.hall_name}</td>
+        <td><code style="background:#f1f5f9;padding:2px 5px;border-radius:4px">${e.budget_id || '—'}</code></td>
+        <td>${e.created_by_name}</td>
+        <td>${statusBadgeHTML(e.status)}</td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
   }
 
   // PRINCIPAL DECISIONS
@@ -1675,12 +2124,13 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
     const dept = type.includes('it') ? 'it' : 'reception';
     const deptEvents = events.filter(e => e.requested_items.some(i => i.dept === dept && i.dept_approved));
     body += `<h2>📋 Allocation Details</h2>
-    <table><thead><tr><th>Event</th><th>Date</th><th>Item</th><th>Requested</th><th>Allocated</th><th>Returned</th></tr></thead>
+    <table><thead><tr><th>Event</th><th>Date</th><th>Item</th><th>Requested</th><th>Allocated</th><th>Returned Qty</th><th>Status</th></tr></thead>
     <tbody>${deptEvents.flatMap(e => e.requested_items.filter(i => i.dept === dept && i.dept_approved).map(i => `<tr>
       <td style="font-weight:700">${e.title}</td><td>${e.date}</td>
       <td>${i.item_name}</td><td>${i.requested_qty}</td>
       <td style="color:#059669;font-weight:700">${i.allocated_qty}</td>
-      <td>${i.returned ? '<span class="badge b-approved">✅ Returned</span>' : '<span class="badge b-pending">⏳ Pending</span>'}</td>
+      <td style="text-align:center;font-weight:700;color:var(--accent)">${i.returned_qty || 0}</td>
+      <td>${(i.returned_qty || 0) >= (i.allocated_qty || 0) ? '<span class="badge b-approved">✅ Fully Returned</span>' : (i.returned_qty > 0 ? '<span class="badge b-it">⏳ Partially Returned</span>' : '<span class="badge b-pending">⚠️ Pending</span>')}</td>
     </tr>`)).join('')}</tbody></table>`;
   }
 
@@ -1706,7 +2156,7 @@ function buildReportHTML(type, { events, inventory, users, halls, stats }) {
     </tr>`).join('')}</tbody></table>`;
   }
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — KPR HUB</title>${reportStyles()}</head>
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title} — KPRCAS HMS</title>${reportStyles()}</head>
   <body>${reportHeader(title, 'Phase Report')}<div id="content">${body}</div>${reportFooter()}</body></html>`;
 }
 
@@ -1752,7 +2202,7 @@ function buildSingleEventReportHTML(e) {
       ${e.principal_note ? `<div class="row"><span class="lbl">Note</span><span class="val" style="font-style:italic">${e.principal_note}</span></div>` : ''}
     </div>`: ''}`;
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Event Report: ${e.title} — KPR HUB</title>${reportStyles()}</head>
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Event Report: ${e.title} — KPRCAS HMS</title>${reportStyles()}</head>
   <body>${reportHeader('Event Report: ' + e.title, 'Individual Event Phase Report')}${body}${reportFooter()}</body></html>`;
 }
 
@@ -1883,6 +2333,20 @@ function applyEventFilter(gridId, role, query, statusFilter) {
 
 function emptyState(icon, title, sub) {
   return `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+}
+function showConfirmModal(title, message, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="text-align:center; padding:10px 0;">
+      <div style="font-size:1.1rem; color:var(--text); margin-bottom:24px; line-height:1.5">${message}</div>
+      <div style="display:flex; gap:12px; max-width:400px; margin:0 auto">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Dismiss</button>
+        <button class="btn btn-danger" style="flex:1" id="confirmOk">Confirm</button>
+      </div>
+    </div>`;
+  const btn = document.getElementById('confirmOk');
+  btn.onclick = () => { onConfirm(); closeModal(); };
+  openModal();
 }
 async function logout() { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/'; }
 

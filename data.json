@@ -26,7 +26,8 @@
       "B.Com. Computer Applications (CA)",
       "B.Com. Business Analytics (BA)",
       "B.Com. E-Commerce (E-Com)",
-      "B.Com. Information Technology (IT)"
+      "B.Com. Information Technology (IT)",
+      "bcom adf"
     ],
     "School of Intelligent Systems & Data Science": [
       "B.Sc. Computer Science with Data Analytics (CSDA)",
@@ -250,35 +251,35 @@
       "name": "Hand Mic",
       "dept": "it",
       "stock_qty": 50,
-      "in_use": 26
+      "in_use": 13
     },
     {
       "id": "it02",
       "name": "Podium Mic",
       "dept": "it",
       "stock_qty": 5,
-      "in_use": 4
+      "in_use": 0
     },
     {
       "id": "it03",
       "name": "Speakers",
       "dept": "it",
       "stock_qty": 8,
-      "in_use": 8
+      "in_use": 0
     },
     {
       "id": "it04",
       "name": "Laptop",
       "dept": "it",
       "stock_qty": 20,
-      "in_use": 20
+      "in_use": 13
     },
     {
       "id": "it05",
       "name": "Projector",
       "dept": "it",
       "stock_qty": 10,
-      "in_use": 10
+      "in_use": 2
     },
     {
       "id": "it06",
@@ -313,7 +314,7 @@
       "name": "White Board",
       "dept": "it",
       "stock_qty": 10,
-      "in_use": 5
+      "in_use": 6
     },
     {
       "id": "rc01",
@@ -334,7 +335,7 @@
       "name": "Tray",
       "dept": "reception",
       "stock_qty": 20,
-      "in_use": 0
+      "in_use": 10
     },
     {
       "id": "rc04",
@@ -390,7 +391,7 @@
       "name": "Stage Chair",
       "dept": "reception",
       "stock_qty": 30,
-      "in_use": 2
+      "in_use": 10
     },
     {
       "id": "rc12",
@@ -425,191 +426,10 @@
       "name": "T-Poy",
       "dept": "reception",
       "stock_qty": 15,
-      "in_use": 1
+      "in_use": 0
     }
   ],
   "events": [
-    {
-      "id": "ea2b39dc8",
-      "title": "TECH_blast_1",
-      "date": "2026-03-19",
-      "days": 1,
-      "time_slot": "9:00 AM - 12:00 PM",
-      "hall_id": "h_sem1",
-      "hall_name": "Seminar Hall 1",
-      "description": "INTERGRATED EVENT",
-      "budget_id": "BUD 101 ",
-      "coordinator": "Vishnu",
-      "coordinator_phone": "789456123",
-      "expected_count": 100,
-      "departments": [
-        {
-          "school": "School of Management",
-          "department": "B.B.A. Logistics"
-        },
-        {
-          "school": "Postgraduate Programmes",
-          "department": "M.Com."
-        }
-      ],
-      "has_intro_video": false,
-      "has_dance": false,
-      "has_photos": false,
-      "has_video": false,
-      "requested_items": [
-        {
-          "item_id": "it01",
-          "item_name": "Hand Mic",
-          "dept": "it",
-          "requested_qty": 10,
-          "allocated_qty": 10,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "rc15",
-          "item_name": "Refreshment Table",
-          "dept": "reception",
-          "requested_qty": 5,
-          "allocated_qty": 3,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "rc16",
-          "item_name": "T-Poy",
-          "dept": "reception",
-          "requested_qty": 10,
-          "allocated_qty": 5,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        }
-      ],
-      "created_by": "u2",
-      "created_by_name": "Dr. Priya",
-      "created_at": "2026-03-16T11:16:01.004853",
-      "principal_decision": "approved",
-      "principal_note": ""
-    },
-    {
-      "id": "e401feaa4",
-      "title": "TECH_blast",
-      "date": "2026-03-17",
-      "days": 2,
-      "time_slot": "9:00 AM - 12:00 PM",
-      "hall_id": "h_oat",
-      "hall_name": "Open Air Theatre (OAT)",
-      "description": "HIHIHI",
-      "budget_id": "BUD 101 ",
-      "coordinator": "SD",
-      "coordinator_phone": "1234569870",
-      "expected_count": 120,
-      "departments": [
-        {
-          "school": "School of IT Integrated Commerce",
-          "department": "B.Com. Information Technology (IT)"
-        },
-        {
-          "school": "School of IT Integrated Commerce",
-          "department": "B.Com. Computer Applications (CA)"
-        }
-      ],
-      "has_intro_video": true,
-      "has_dance": true,
-      "has_photos": true,
-      "has_video": true,
-      "requested_items": [
-        {
-          "item_id": "it01",
-          "item_name": "Hand Mic",
-          "dept": "it",
-          "requested_qty": 50,
-          "allocated_qty": 20,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it02",
-          "item_name": "Podium Mic",
-          "dept": "it",
-          "requested_qty": 10,
-          "allocated_qty": 5,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it03",
-          "item_name": "Speakers",
-          "dept": "it",
-          "requested_qty": 15,
-          "allocated_qty": 8,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it04",
-          "item_name": "Laptop",
-          "dept": "it",
-          "requested_qty": 5,
-          "allocated_qty": 5,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it05",
-          "item_name": "Projector",
-          "dept": "it",
-          "requested_qty": 20,
-          "allocated_qty": 10,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it06",
-          "item_name": "Presenter",
-          "dept": "it",
-          "requested_qty": 20,
-          "allocated_qty": 8,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it09",
-          "item_name": "Video Camera",
-          "dept": "it",
-          "requested_qty": 20,
-          "allocated_qty": 3,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "rc01",
-          "item_name": "Lamp",
-          "dept": "reception",
-          "requested_qty": 52,
-          "allocated_qty": 20,
-          "dept_approved": true,
-          "returned": true,
-          "dept_rejected": false,
-          "returned_qty": 20
-        }
-      ],
-      "created_by": "u2",
-      "created_by_name": "Dr. Priya",
-      "created_at": "2026-03-16T11:37:52.575334",
-      "principal_decision": "approved",
-      "principal_note": ""
-    },
     {
       "id": "e19e7d849",
       "title": "aswerty",
@@ -766,8 +586,9 @@
           "requested_qty": 10,
           "allocated_qty": 10,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 10
         },
         {
           "item_id": "it02",
@@ -776,8 +597,9 @@
           "requested_qty": 2,
           "allocated_qty": 2,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 2
         },
         {
           "item_id": "it03",
@@ -786,8 +608,9 @@
           "requested_qty": 8,
           "allocated_qty": 8,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 8
         },
         {
           "item_id": "it04",
@@ -796,8 +619,9 @@
           "requested_qty": 2,
           "allocated_qty": 2,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 2
         },
         {
           "item_id": "rc11",
@@ -806,8 +630,9 @@
           "requested_qty": 4,
           "allocated_qty": 2,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 2
         },
         {
           "item_id": "rc16",
@@ -816,8 +641,9 @@
           "requested_qty": 4,
           "allocated_qty": 1,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 1
         }
       ],
       "created_by": "u2",
@@ -876,15 +702,16 @@
           "item_name": "Tray",
           "dept": "reception",
           "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
         }
       ],
       "created_by": "u2",
       "created_by_name": "Dr. Priya",
       "created_at": "2026-03-24T10:24:41.821911",
-      "principal_decision": null,
+      "principal_decision": "rejected",
       "principal_note": ""
     },
     {
@@ -937,9 +764,10 @@
           "item_name": "Tray",
           "dept": "reception",
           "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
         }
       ],
       "created_by": "u2",
@@ -1060,8 +888,9 @@
           "dept": "reception",
           "requested_qty": 10,
           "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
         }
       ],
       "created_by": "u2",
@@ -1153,8 +982,9 @@
           "requested_qty": 3,
           "allocated_qty": 3,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 3
         }
       ],
       "created_by": "u2",
@@ -1309,8 +1139,9 @@
           "requested_qty": 50,
           "allocated_qty": 10,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 10
         },
         {
           "item_id": "it02",
@@ -1319,8 +1150,9 @@
           "requested_qty": 2,
           "allocated_qty": 2,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 2
         },
         {
           "item_id": "it10",
@@ -1329,14 +1161,877 @@
           "requested_qty": 5,
           "allocated_qty": 5,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 5
         }
       ],
       "created_by": "u12c112bd",
       "created_by_name": "naveen",
       "created_at": "2026-03-26T14:23:14.082668",
       "principal_decision": "approved",
+      "principal_note": ""
+    },
+    {
+      "id": "e4243bf0a",
+      "title": "CHAKARYUGA",
+      "event_type": "General",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab4,h_lab2,h_sem1",
+      "hall_name": "Lab 2, Lab 4, Seminar Hall 1",
+      "description": "STUDENT WORKSHOP",
+      "budget_id": "bd 123",
+      "coordinator": "VISHNU",
+      "coordinator_phone": "9344457242",
+      "expected_count": 50,
+      "departments": [
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Professional Accounting (PA)"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 1,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T10:20:02.929972",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "eb951f891",
+      "title": "vocal",
+      "event_type": "Cultural",
+      "date": "2026-04-01",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_sem1",
+      "hall_name": "Seminar Hall 1",
+      "description": "cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 300,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "requested_items": [
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 100,
+          "allocated_qty": 1,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T10:59:24.086868",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e69efc7b2",
+      "title": "GURU",
+      "event_type": "Cultural",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab2,h_lab6,h_lab7",
+      "hall_name": "Lab 2, Lab 6, Lab 7",
+      "description": "df",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 60,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Professional Accounting (PA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "requested_items": [
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 5,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T12:20:45.743895",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e675da7ea",
+      "title": "GURU",
+      "event_type": "Cultural",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab2,h_lab6,h_lab7",
+      "hall_name": "Lab 2, Lab 6, Lab 7",
+      "description": "df",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 60,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Professional Accounting (PA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "requested_items": [
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T12:20:48.819416",
+      "principal_decision": null,
+      "principal_note": "",
+      "cancel_reason": "User cancelled via dashboard",
+      "cancelled_by": "Dr. Priya",
+      "cancelled_at": "2026-04-07T14:12:35.796519"
+    },
+    {
+      "id": "e82ae75fb",
+      "title": "GURU",
+      "event_type": "Cultural",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab2,h_lab6,h_lab7",
+      "hall_name": "Lab 2, Lab 6, Lab 7",
+      "description": "df",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 60,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com. Professional Accounting (PA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": true,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "requested_items": [
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc11",
+          "item_name": "Stage Chair",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T12:20:49.671325",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e26430c0c",
+      "title": "GURU",
+      "event_type": "",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab2,h_lab6,h_lab7",
+      "hall_name": "Lab 2, Lab 6, Lab 7",
+      "description": "",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "",
+      "resource_person": "",
+      "expected_count": 60,
+      "departments": [],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "requested_items": [],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T12:20:49.894902",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ef44cdfdb",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/d2114db0eee940dc9899045832d9316c_73208260.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:34.955749",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e40828454",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/e5958f8334d94a7187be7b8cf2a5e4aa_239b28dc.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:36.123120",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ed849b23b",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/0b7110edb9fd4045acd142ff3924900a_ce60ca0f.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:37.073712",
+      "principal_decision": null,
+      "principal_note": "",
+      "cancel_reason": "User cancelled via dashboard",
+      "cancelled_by": "Dr. Priya",
+      "cancelled_at": "2026-04-07T14:12:26.439488"
+    },
+    {
+      "id": "ead8f14ab",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/b0a88e668eee43e6bbd4716de82f1fd3_1b942210.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:37.315912",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e4575d008",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/c547d099fd6e423c9b2c6bed553c1f01_8115f484.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:37.538419",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e391d701a",
+      "title": "Tech fest",
+      "event_type": "Conference",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 120,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        },
+        {
+          "school": "School of Commerce",
+          "department": "B.Com."
+        },
+        {
+          "school": "School of Intelligent Systems & Data Science",
+          "department": "B.Sc. Computer Science with Data Analytics (CSDA)"
+        }
+      ],
+      "has_intro_video": true,
+      "has_dance": false,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/de2d7090526b4c8ba4054919aa43fbe4_5376d8a5.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc06",
+          "item_name": "Plug Card",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:38.498960",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ee87a6bed",
+      "title": "Tech fest",
+      "event_type": "",
+      "date": "2026-04-02",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_bf101,h_lab4",
+      "hall_name": "BF 101, Lab 4",
+      "description": "Cultural",
+      "budget_id": "bd 123",
+      "coordinator": "Vishnu",
+      "coordinator_phone": "",
+      "resource_person": "",
+      "expected_count": 120,
+      "departments": [],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/1461e2105ec84c32ac25d9ebd9356e9b_56bcb332.docx",
+      "requested_items": [],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-01T13:32:39.910456",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "ecb2ed291",
+      "title": "xc",
+      "event_type": "Workshop",
+      "date": "2026-04-06",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "custom_class",
+      "hall_name": "Custom Class (af131)",
+      "description": "",
+      "budget_id": "bd 123",
+      "coordinator": "RAm",
+      "coordinator_phone": "9344457242",
+      "resource_person": "vicky",
+      "expected_count": 100,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Sc. Data Science"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "",
+      "agenda_path": "/static/uploads/9653017891674302923aa85b8ce727a1_0aaf8956.docx",
+      "requested_items": [
+        {
+          "item_id": "it02",
+          "item_name": "Podium Mic",
+          "dept": "it",
+          "requested_qty": 45,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 4,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-06T14:21:06.991838",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e6464d5ae",
+      "title": "asdfb",
+      "event_type": "Workshop",
+      "date": "2026-04-07",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_lab4",
+      "hall_name": "Lab 4",
+      "description": "dcfv",
+      "budget_id": "bd 123",
+      "coordinator": "sdf",
+      "coordinator_phone": "9344457242",
+      "resource_person": "sdv",
+      "expected_count": 100,
+      "departments": [
+        {
+          "school": "Postgraduate Programmes",
+          "department": "M.Com."
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": false,
+      "has_photos": false,
+      "has_video": false,
+      "special_requirements": "wef",
+      "agenda_path": "/static/uploads/4e3ad79c4bf84146ba84ebc8181c693b_1712b7b0.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc10",
+          "item_name": "Stage Table",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-06T15:18:43.988632",
+      "principal_decision": null,
       "principal_note": ""
     }
   ]

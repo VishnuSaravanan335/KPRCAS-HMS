@@ -4,198 +4,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KPRCAS HMS – Login</title>
+  <title>KPRCAS HMS | Institutional Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet">
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     :root {
-      --primary: #6366f1;
-      --primary-dark: #4f46e5;
-      --secondary: #0ea5e9;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --accent: #10b981;
       --bg: #0f172a;
-      --surface: rgba(255, 255, 255, 0.03);
-      --border: rgba(255, 255, 255, 0.08);
+      --surface: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.1);
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --radius: 20px;
     }
 
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: 'Outfit', sans-serif;
-      background: url('https://image2url.com/r2/default/images/1774693300562-ec230e1e-7f9c-4a56-ad58-919234579dae.png') no-repeat center center fixed;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0f172a;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+        url('https://image2url.com/r2/default/images/1774693300562-ec230e1e-7f9c-4a56-ad58-919234579dae.png');
       background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      margin: 0;
+      padding: 24px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 440px;
       position: relative;
     }
 
-    body::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.3); /* Subtle overlay to ensure text readability */
-      z-index: 0;
-    }
-
+    /* Glass Effect Card Upgrade */
     .login-card {
-      width: 440px;
+      background: rgba(15, 23, 42, 0.4); /* Transparent dark base */
+      backdrop-filter: blur(40px) saturate(200%); /* Modern blur */
+      -webkit-backdrop-filter: blur(40px) saturate(200%);
+      border: 1.5px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+      border-radius: var(--radius);
       padding: 48px;
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.125);
-      border-radius: 12px;
-      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-      position: relative;
-      z-index: 1;
-      animation: cardSlide 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes cardSlide {
-      from { opacity: 0; transform: translateY(40px); }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .brand-section {
+    .header {
       text-align: center;
       margin-bottom: 40px;
     }
 
-    .brand-logo {
+    .logo-wrapper {
       width: 72px;
       height: 72px;
-      margin: 0 auto 20px;
       background: #ffffff;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
       padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.1);
     }
 
-    .brand-logo img {
+    .logo-wrapper img {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
 
     .title {
-      font-size: 2rem;
+      font-size: 1.85rem;
       font-weight: 800;
       letter-spacing: -0.03em;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background: linear-gradient(to right, #fff, #94a3b8);
-      -webkit-background-clip: text;
       background-clip: text;
+      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .subtitle {
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
       font-weight: 500;
+      letter-spacing: 0.02em;
     }
 
-    .form-group {
+    .form-field {
       margin-bottom: 24px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
     }
 
     .input-wrapper input {
       width: 100%;
-      padding: 18px 24px;
-      background: rgba(255, 255, 255, 0.12);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.06);
       border-radius: 12px;
-      color: #ffffff;
+      padding: 14px 18px;
+      color: #fff;
       font-family: inherit;
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       outline: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.25s ease;
     }
 
     .input-wrapper input:focus {
-      border-color: #6366f1;
-      background: rgba(255, 255, 255, 0.18);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
     }
 
-    .form-group:focus-within label {
-      color: #6366f1;
-      transform: translateX(4px);
-      text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #ffffff;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      margin-bottom: 12px;
-      margin-left: 4px;
-      transition: all 0.3s ease;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .btn-submit {
+    .btn-login {
       width: 100%;
-      padding: 16px;
+      padding: 15px;
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
       border: none;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-      margin-top: 12px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+      margin-top: 8px;
     }
 
-    .btn-submit:hover {
+    .btn-login:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
       filter: brightness(1.1);
     }
 
-    .error-msg {
+    .btn-login:active { transform: translateY(0); }
+
+    .error-box {
       margin-top: 20px;
-      padding: 12px 16px;
+      padding: 12px;
       background: rgba(239, 68, 68, 0.1);
       border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
+      border-radius: 10px;
       color: #f87171;
-      font-size: 0.875rem;
-      font-weight: 500;
-      display: none;
+      font-size: 0.85rem;
+      font-weight: 600;
       text-align: center;
+      display: none;
     }
 
-    /* Demo Credentials Section */
     .demo-section {
-      margin-top: 40px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .demo-title {
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 0.68rem;
+      font-weight: 800;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -212,85 +209,87 @@
     .demo-btn {
       padding: 10px;
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      text-align: center;
     }
 
-    .demo-btn:hover, .demo-btn.active {
-      background: rgba(255, 255, 255, 0.08);
+    .demo-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
       border-color: var(--primary);
       color: #fff;
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-      transform: scale(1.02);
     }
 
-    .demo-btn.active {
-      background: rgba(99, 102, 241, 0.15);
-      border-width: 2px;
+    .demo-btn.full { grid-column: span 2; }
+
+    /* Footer Branding */
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.02em;
     }
 
-    .demo-btn.full {
-      grid-column: span 2;
+    @media (max-width: 440px) {
+      .login-card { padding: 32px 24px; }
+      .footer { display: none; }
     }
-
   </style>
 </head>
 
 <body>
-  <!-- Refined Background with Overlay -->
-
-
-  <div class="login-card">
-    <div class="brand-section">
-      <div class="brand-logo">
-        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="KPRCAS Logo">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="header">
+        <div class="logo-wrapper">
+          <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="Logo">
+        </div>
+        <h1 class="title">KPRCAS HMS</h1>
+        <p class="subtitle">Institutional Booking Portal</p>
       </div>
-      <h1 class="title">KPRCAS HMS</h1>
-      <p class="subtitle">Event Management System</p>
+
+      <div class="form-field">
+        <label>Username</label>
+        <div class="input-wrapper">
+          <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+      </div>
+
+      <button class="btn-login" onclick="doLogin()">Authorize & Continue</button>
+      <div class="error-box" id="errMsg"></div>
+
+      <div class="demo-section">
+        <h3 class="demo-title">Administrative Role Access</h3>
+        <div class="demo-grid">
+          <button class="demo-btn" onclick="qL('admin','admin123')">System Admin</button>
+          <button class="demo-btn" onclick="qL('booker','booker123')">Faculty / Staff</button>
+          <button class="demo-btn" onclick="qL('it','it123')">IT Support</button>
+          <button class="demo-btn" onclick="qL('reception','reception123')">Reception</button>
+          <button class="demo-btn full" onclick="qL('principal','principal123')">Principal Approval Desk</button>
+        </div>
+      </div>
     </div>
-
-    <div class="form-group">
-      <label>Username</label>
-      <div class="input-wrapper">
-        <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Password</label>
-      <div class="input-wrapper">
-        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-    </div>
-
-    <button class="btn-submit" onclick="doLogin()">Sign In</button>
-    <div class="error-msg" id="errMsg"></div>
-
-    <div class="demo-section">
-      <div class="demo-title">Quick Access</div>
-      <div class="demo-grid">
-        <button class="demo-btn" onclick="qL(this,'admin','admin123')">Admin</button>
-        <button class="demo-btn" onclick="qL(this,'booker','booker123')">Booker</button>
-        <button class="demo-btn" onclick="qL(this,'it','it123')">IT Dept</button>
-        <button class="demo-btn" onclick="qL(this,'reception','reception123')">Reception</button>
-        <button class="demo-btn full" onclick="qL(this,'principal','principal123')">Principal Desk</button>
-      </div>
+    
+    <div class="footer">
+      KPR INSTITUTIONS — HALL MANAGEMENT SYSTEM · V2.6.0
     </div>
   </div>
 
   <script>
-    function qL(btn, u, p) {
-      // Remove active class from all demo buttons
-      document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
-      // Add active class to clicked button
-      if(btn) btn.classList.add('active');
-      
+    function qL(u, p) {
       document.getElementById('username').value = u;
       document.getElementById('password').value = p;
       doLogin();
@@ -300,11 +299,13 @@
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
       const err = document.getElementById('errMsg');
+      
       if (!u || !p) {
         err.style.display = 'block';
-        err.textContent = 'Enter username & password';
+        err.textContent = 'Please enter valid credentials';
         return;
       }
+      
       err.style.display = 'none';
       try {
         const res = await fetch('/api/login', {
@@ -316,13 +317,13 @@
         const d = await res.json();
         if (!res.ok) {
           err.style.display = 'block';
-          err.textContent = d.error || 'Login failed';
+          err.textContent = d.error || 'Authentication denied';
           return;
         }
         window.location.href = '/dashboard';
       } catch (e) {
         err.style.display = 'block';
-        err.textContent = 'Server connection error';
+        err.textContent = 'Service unavailable. Check connection.';
       }
     }
   </script>
