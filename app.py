@@ -77,11 +77,33 @@ def send_event_notification(event_data):
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
     
-    # Notify admins, booker, IT, and Reception
+    # Trigger next department email
+    def is_dept_done(event, target_dept):
+        ri = event.get('requested_items', [])
+        items = [i for i in ri if i['dept'] == target_dept]
+        if not items:
+            return True
+        return all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in items)
+
+    next_dept = None
+    if not is_dept_done(event_data, 'it'): next_dept = 'it'
+    elif not is_dept_done(event_data, 'reception'): next_dept = 'reception'
+    elif not is_dept_done(event_data, 'pixesclub'): next_dept = 'pixesclub'
+    elif not is_dept_done(event_data, 'fineartsclub'): next_dept = 'fineartsclub'
+
     recipients = admins
     if booker_email: recipients.append(booker_email)
-    recipients.append(IT_MAIL_USERNAME)
-    recipients.append(REC_MAIL_USERNAME)
+    
+    if next_dept == 'it':
+        recipients.append(IT_MAIL_USERNAME)
+    elif next_dept == 'reception':
+        recipients.append(REC_MAIL_USERNAME)
+    elif next_dept == 'pixesclub':
+        pc = next((u for u in data.get('users', []) if u['role'] == 'pixesclub'), None)
+        if pc and pc.get('email'): recipients.append(pc.get('email'))
+    elif next_dept == 'fineartsclub':
+        fa = next((u for u in data.get('users', []) if u['role'] == 'fineartsclub'), None)
+        if fa and fa.get('email'): recipients.append(fa.get('email'))
     
     # Filter duplicates and empty strings
     recipients = list(set([r for r in recipients if r and "@" in r]))
@@ -128,46 +150,124 @@ def send_event_notification(event_data):
     return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"🔔 New Event Booking: {event_data.get('title')}", html)
 
 def send_approval_notification(event_data, recipient=None):
-    """Sends a professional HTML email when an event is approved by the Principal."""
+    """Sends email when an event is approved by the Principal — to Booker, IT, Reception, Admin."""
     admins = get_admin_emails()
-    # Find booker email
     booker_id = event_data.get('created_by')
     data = load_data()
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
-    
-    recipients = admins
-    if booker_email: recipients.append(booker_email)
-    if recipient: recipients.append(recipient)
-    
+
+    recipients = list(set(admins + [IT_MAIL_USERNAME, REC_MAIL_USERNAME] +
+                         ([booker_email] if booker_email else []) +
+                         ([recipient] if recipient else [])))
+    recipients = [r for r in recipients if r and "@" in r]
     if not recipients:
         recipients = ["23bcomca131@kprcas.ac.in"]
 
-    if not MAIL_PASSWORD:
-        return False, "SMTP password not configured."
+    html = f"""
+    <html><body style="font-family:sans-serif;color:#333;line-height:1.6">
+    <div style="max-width:600px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:14px;background:#f0fdf4">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:48px;height:48px;background:#16a34a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff">✓</div>
+        <div>
+          <h2 style="margin:0;color:#15803d;font-size:1.25rem">Event Approved!</h2>
+          <p style="margin:0;font-size:0.85rem;color:#4b5563">KPRCAS Hall Management System</p>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:18px;border:1px solid #bbf7d0;margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280;width:140px">Event</td><td style="font-weight:600;color:#111827">{event_data.get('title')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Date</td><td>{event_data.get('date')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Venue</td><td>{event_data.get('hall_name')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Hall</td><td>{event_data.get('time_slot','')}</td></tr>
+        </table>
+      </div>
+      <p style="color:#166534;font-weight:500;font-size:0.9rem">✅ This event has been fully approved by the Principal. All departments please prepare accordingly.</p>
+      <p style="font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:16px">KPRCAS HMS • Automated Notification</p>
+    </div></body></html>"""
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"✅ Event Approved: {event_data.get('title')}", html)
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"✅ Event Approved: {event_data.get('title')}"
-    msg["From"] = MAIL_DEFAULT_SENDER
-    msg["To"] = ", ".join(recipients)
+def send_rejection_notification(event_data):
+    """Sends email when an event is rejected by the Principal — to Booker, IT, Reception, Admin."""
+    admins = get_admin_emails()
+    booker_id = event_data.get('created_by')
+    data = load_data()
+    booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
+    booker_email = booker.get('email') if booker else None
+
+    recipients = list(set(admins + [IT_MAIL_USERNAME, REC_MAIL_USERNAME] +
+                         ([booker_email] if booker_email else [])))
+    recipients = [r for r in recipients if r and "@" in r]
+    if not recipients:
+        recipients = ["23bcomca131@kprcas.ac.in"]
+
+    note = event_data.get('principal_note', 'No reason provided.')
+    html = f"""
+    <html><body style="font-family:sans-serif;color:#333;line-height:1.6">
+    <div style="max-width:600px;margin:0 auto;padding:24px;border:1px solid #fecaca;border-radius:14px;background:#fef2f2">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:48px;height:48px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff">✕</div>
+        <div>
+          <h2 style="margin:0;color:#b91c1c;font-size:1.25rem">Event Rejected</h2>
+          <p style="margin:0;font-size:0.85rem;color:#6b7280">KPRCAS Hall Management System</p>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:18px;border:1px solid #fecaca;margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280;width:140px">Event</td><td style="font-weight:600;color:#111827">{event_data.get('title')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Date</td><td>{event_data.get('date')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Venue</td><td>{event_data.get('hall_name')}</td></tr>
+        </table>
+      </div>
+      <div style="background:#fff1f2;border-radius:8px;padding:14px;border-left:4px solid #ef4444;margin-bottom:16px">
+        <p style="font-weight:700;color:#b91c1c;margin:0 0 6px">Principal's Reason:</p>
+        <p style="color:#374151;margin:0">{note}</p>
+      </div>
+      <p style="font-size:0.78rem;color:#9ca3af;border-top:1px solid #fee2e2;padding-top:12px;margin-top:4px">KPRCAS HMS • Automated Notification</p>
+    </div></body></html>"""
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"❌ Event Rejected: {event_data.get('title')}", html)
+
+def send_dept_decision_notification(event_data, role, decision):
+    """Send IT or Reception approve/reject notification to the Booker."""
+    booker_id = event_data.get('created_by')
+    data = load_data()
+    booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
+    booker_email = booker.get('email') if booker else None
+    if not booker_email:
+        return False, "No booker email"
+
+    dept_name = "IT Support" if role == 'it' else "Reception"
+    is_approved = (decision == 'approved')
+    status_color = "#16a34a" if is_approved else "#b91c1c"
+    status_bg = "#f0fdf4" if is_approved else "#fef2f2"
+    status_border = "#bbf7d0" if is_approved else "#fecaca"
+    icon = "✓" if is_approved else "✕"
+    icon_bg = "#16a34a" if is_approved else "#dc2626"
+    verb = "Approved" if is_approved else "Rejected"
+    subject = f"{'✅' if is_approved else '❌'} {dept_name} {verb}: {event_data.get('title')}"
 
     html = f"""
-    <html>
-    <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f0fdf4;">
-            <h2 style="color: #16a34a; margin-bottom: 20px;">KPRCAS HMS - Event Approved</h2>
-            <p>Your proposal has been <strong>approved</strong> by IT, Reception, and the Principal.</p>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 8px;">
-                <tr><td style="padding: 8px 0; font-weight: bold; width: 150px; color: #4b5563;">Event Name:</td><td style="color: #1f2937;">{event_data.get('title')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Day:</td><td style="color: #1f2937;">{event_data.get('date')}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Venue:</td><td style="color: #1f2937;">{event_data.get('hall_name')}</td></tr>
-            </table>
-            <p style="margin-top: 20px; font-size: 0.9rem; color: #166534; font-weight: 500;">Please log into KPRCAS HMS to download your receipt and finalize preparations.</p>
+    <html><body style="font-family:sans-serif;color:#333;line-height:1.6">
+    <div style="max-width:600px;margin:0 auto;padding:24px;border:1px solid {status_border};border-radius:14px;background:{status_bg}">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:48px;height:48px;background:{icon_bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff">{icon}</div>
+        <div>
+          <h2 style="margin:0;color:{status_color};font-size:1.2rem">{dept_name} Requirements {verb}</h2>
+          <p style="margin:0;font-size:0.85rem;color:#6b7280">KPRCAS HMS Notification</p>
         </div>
-    </body>
-    </html>
-    """
-    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"✅ Event Approved: {event_data.get('title')}", html)
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:18px;border:1px solid {status_border};margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280;width:140px">Event</td><td style="font-weight:600">{event_data.get('title')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Date</td><td>{event_data.get('date')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Venue</td><td>{event_data.get('hall_name')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Department</td><td>{dept_name}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Status</td><td style="font-weight:800;color:{status_color}">{verb.upper()}</td></tr>
+        </table>
+      </div>
+      <p style="font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px">KPRCAS HMS • Automated Notification</p>
+    </div></body></html>"""
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, [booker_email], subject, html)
 
 def send_allocation_complete_notification(event_data, recipient=None):
     """Notify Principal and Booker that IT/Reception allocation is done."""
@@ -195,10 +295,9 @@ def send_stage_update_notification(event_data, role):
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
     
-    # We now use the main account for ALL notifications to ensure reliability
     sender = MAIL_USERNAME
     pwd = MAIL_PASSWORD
-    dept_name = "IT Support" if role == 'it' else "Reception"
+    dept_name = "IT Support" if role == 'it' else ("Reception" if role == 'reception' else ("Pixes Club" if role == 'pixesclub' else "Fine Arts Club"))
 
     # Specific requirement: If IT approves, notify User and Reception
     if role == 'it':
@@ -238,6 +337,44 @@ def send_stage_update_notification(event_data, role):
         </body></html>"""
         if booker_email:
             send_smtp_email(sender, pwd, [booker_email], subject, html)
+
+    # Sequence Check logic to notify the NEXT department
+    def is_dept_done(event, target_dept):
+        ri = event.get('requested_items', [])
+        items = [i for i in ri if i['dept'] == target_dept]
+        if not items:
+            return True
+        return all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in items)
+
+    next_dept = None
+    if not is_dept_done(event_data, 'it'): next_dept = 'it'
+    elif not is_dept_done(event_data, 'reception'): next_dept = 'reception'
+    elif not is_dept_done(event_data, 'pixesclub'): next_dept = 'pixesclub'
+    elif not is_dept_done(event_data, 'fineartsclub'): next_dept = 'fineartsclub'
+
+    # If the just-finished role means there is a new next_dept, notify them
+    if next_dept and next_dept != role:
+        recipients = []
+        if next_dept == 'it': recipients.append(IT_MAIL_USERNAME)
+        elif next_dept == 'reception': recipients.append(REC_MAIL_USERNAME)
+        elif next_dept == 'pixesclub':
+            pc = next((u for u in data.get('users', []) if u['role'] == 'pixesclub'), None)
+            if pc and pc.get('email'): recipients.append(pc.get('email'))
+        elif next_dept == 'fineartsclub':
+            fa = next((u for u in data.get('users', []) if u['role'] == 'fineartsclub'), None)
+            if fa and fa.get('email'): recipients.append(fa.get('email'))
+            
+        recipients = list(set([r for r in recipients if r and "@" in r]))
+        if recipients:
+            n_subject = f"🔔 Next Step Required: {event_data.get('title')}"
+            n_html = f"""
+            <html><body style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+                    <h2 style="color: #4f46e5;">Pending Approval Required</h2>
+                    <p>The previous department has processed their requirements. It is now your turn to review <strong>{event_data['title']}</strong>.</p>
+                </div>
+            </body></html>"""
+            send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, n_subject, n_html)
 
     # If both IT and Reception are done, send final details from HMS account
     status = compute_event_status(event_data)
@@ -300,11 +437,13 @@ def init_data() -> JsonDict:
     data: JsonDict = {
         "settings": {"portal_locked": False},
         "users": [
-            {"id": "u1", "name": "Admin User",       "username": "admin",     "password": hash_pw("admin123"),     "role": "admin"},
-            {"id": "u2", "name": "Dr. Priya",         "username": "booker",    "password": hash_pw("booker123"),    "role": "booker"},
-            {"id": "u3", "name": "Rajan (IT)",        "username": "it",        "password": hash_pw("it123"),        "role": "it"},
-            {"id": "u4", "name": "Meena (Reception)", "username": "reception", "password": hash_pw("reception123"), "role": "reception"},
-            {"id": "u5", "name": "Principal Kumar",   "username": "principal", "password": hash_pw("principal123"), "role": "principal"},
+            {"id": "u1", "name": "Admin User",       "username": "admin",        "password": hash_pw("admin123"),        "role": "admin"},
+            {"id": "u2", "name": "Dr. Priya",         "username": "booker",       "password": hash_pw("booker123"),       "role": "booker"},
+            {"id": "u3", "name": "Rajan (IT)",        "username": "it",           "password": hash_pw("it123"),           "role": "it"},
+            {"id": "u4", "name": "Meena (Reception)", "username": "reception",    "password": hash_pw("reception123"),    "role": "reception"},
+            {"id": "u5", "name": "Principal Kumar",   "username": "principal",    "password": hash_pw("principal123"),    "role": "principal"},
+            {"id": "u6", "name": "Pixes Club Lead",   "username": "pixesclub",    "password": hash_pw("pixes123"),        "role": "pixesclub",    "email": ""},
+            {"id": "u7", "name": "Fine Arts Lead",    "username": "fineartsclub", "password": hash_pw("finearts123"),     "role": "fineartsclub", "email": ""},
         ],
         "halls": [
             # ── Classrooms ──────────────────────────────────────────────────
@@ -357,6 +496,18 @@ def init_data() -> JsonDict:
             {"id": "rc14", "name": "Reception Table",    "dept": "reception", "stock_qty": 8,   "in_use": 0},
             {"id": "rc15", "name": "Refreshment Table",  "dept": "reception", "stock_qty": 8,   "in_use": 0},
             {"id": "rc16", "name": "T-Poy",              "dept": "reception", "stock_qty": 15,  "in_use": 0},
+            # ── Pixes Club (Photography) ──────────────────────────────────────
+            {"id": "px01", "name": "DSLR Camera",        "dept": "pixesclub",    "stock_qty": 5,   "in_use": 0},
+            {"id": "px02", "name": "Go Pro Camera",      "dept": "pixesclub",    "stock_qty": 3,   "in_use": 0},
+            {"id": "px03", "name": "Drone",              "dept": "pixesclub",    "stock_qty": 2,   "in_use": 0},
+            {"id": "px04", "name": "Camera Tripod",      "dept": "pixesclub",    "stock_qty": 8,   "in_use": 0},
+            {"id": "px05", "name": "Photo Printer",      "dept": "pixesclub",    "stock_qty": 2,   "in_use": 0},
+            # ── Fine Arts Club (Dance / Events) ──────────────────────────────
+            {"id": "fa01", "name": "Backdrop Stand",     "dept": "fineartsclub", "stock_qty": 4,   "in_use": 0},
+            {"id": "fa02", "name": "Costume Set",        "dept": "fineartsclub", "stock_qty": 10,  "in_use": 0},
+            {"id": "fa03", "name": "Stage Lights",       "dept": "fineartsclub", "stock_qty": 12,  "in_use": 0},
+            {"id": "fa04", "name": "Sound System",       "dept": "fineartsclub", "stock_qty": 3,   "in_use": 0},
+            {"id": "fa05", "name": "Dance Props Set",    "dept": "fineartsclub", "stock_qty": 5,   "in_use": 0},
         ],
         "events": []
     }
@@ -700,7 +851,7 @@ def get_inventory() -> Response:
     return jsonify(result)
 
 @app.route('/api/inventory', methods=['POST'])
-@roles_required('admin', 'it', 'reception')
+@roles_required('admin', 'it', 'reception', 'pixesclub', 'fineartsclub')
 def create_inventory() -> RouteResp:
     d: JsonDict = get_request_json()
     data = load_data()
@@ -716,7 +867,7 @@ def create_inventory() -> RouteResp:
     return jsonify(item), 201
 
 @app.route('/api/inventory/<iid>', methods=['PUT'])
-@roles_required('admin', 'it', 'reception')
+@roles_required('admin', 'it', 'reception', 'pixesclub', 'fineartsclub')
 def update_inventory(iid: str) -> RouteResp:
     d: JsonDict = get_request_json()
     data = load_data()
@@ -743,17 +894,21 @@ def delete_inventory(iid: str) -> Response:
 def compute_event_status(event: JsonDict) -> str:
     """Determine current status based on approvals."""
     ri: List[JsonDict]  = list(event.get('requested_items', []))
-    it_items:  List[JsonDict] = [i for i in ri if i['dept'] == 'it']
-    rec_items: List[JsonDict] = [i for i in ri if i['dept'] == 'reception']
-    it_done:   bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in it_items)  if it_items  else True
-    rec_done:  bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in rec_items) if rec_items else True
+    it_items:      List[JsonDict] = [i for i in ri if i['dept'] == 'it']
+    rec_items:     List[JsonDict] = [i for i in ri if i['dept'] == 'reception']
+    pixes_items:   List[JsonDict] = [i for i in ri if i['dept'] == 'pixesclub']
+    fa_items:      List[JsonDict] = [i for i in ri if i['dept'] == 'fineartsclub']
+    it_done:    bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in it_items)  if it_items  else True
+    rec_done:   bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in rec_items) if rec_items else True
+    pixes_done: bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in pixes_items) if pixes_items else True
+    fa_done:    bool = all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in fa_items) if fa_items else True
     if event.get('cancel_reason'):
         return 'cancelled'
     if event.get('principal_decision') == 'approved':
         return 'approved'
     if event.get('principal_decision') == 'rejected':
         return 'rejected'
-    if it_done and rec_done:
+    if it_done and rec_done and pixes_done and fa_done:
         return 'principal_review'
     return 'dept_review'
 
@@ -764,12 +919,23 @@ def get_events() -> Response:
     events: List[JsonDict] = list(data['events'])
     role: str = str(session['role'])
     uid:  str = str(session['user_id'])
+    def is_dept_done(event, target_dept):
+        ri = event.get('requested_items', [])
+        items = [i for i in ri if i['dept'] == target_dept]
+        if not items:
+            return True
+        return all(bool(i.get('dept_approved')) or bool(i.get('dept_rejected')) for i in items)
+
     if role == 'booker':
         events = [e for e in events if e['created_by'] == uid]
     elif role == 'it':
         events = [e for e in events if any(i['dept'] == 'it' for i in e.get('requested_items', []))]
     elif role == 'reception':
-        events = [e for e in events if any(i['dept'] == 'reception' for i in e.get('requested_items', []))]
+        events = [e for e in events if any(i['dept'] == 'reception' for i in e.get('requested_items', [])) and is_dept_done(e, 'it')]
+    elif role == 'pixesclub':
+        events = [e for e in events if any(i['dept'] == 'pixesclub' for i in e.get('requested_items', [])) and is_dept_done(e, 'it') and is_dept_done(e, 'reception')]
+    elif role == 'fineartsclub':
+        events = [e for e in events if any(i['dept'] == 'fineartsclub' for i in e.get('requested_items', [])) and is_dept_done(e, 'it') and is_dept_done(e, 'reception') and is_dept_done(e, 'pixesclub')]
     # principal & admin see all
     result: List[JsonDict] = []
     for e in events:
@@ -1005,7 +1171,7 @@ def cancel_event(eid: str) -> RouteResp:
     return jsonify({"ok": True, "status": "cancelled", "reason": reason})
 
 @app.route('/api/events/<eid>/dept-review', methods=['POST'])
-@roles_required('it', 'reception')
+@roles_required('it', 'reception', 'pixesclub', 'fineartsclub')
 def dept_review(eid: str) -> RouteResp:
     """IT or Reception allocate quantities to event items."""
     d:    JsonDict = get_request_json()
@@ -1044,15 +1210,20 @@ def dept_review(eid: str) -> RouteResp:
                     ri['dept_rejected'] = False
 
     save_data(data)
-    
-    # Notify Booker about the department completion
+
+    # Determine if this submission was an approve or reject
+    decision = 'rejected' if is_reject else 'approved'
+    # Notify Booker with approve/reject email
+    send_dept_decision_notification(event, role, decision)
+
+    # Also fire legacy stage update (notifies Reception when IT finishes, etc.)
     send_stage_update_notification(event, role)
-    
+
     # Send notification to Principal if ALL departments finished
     new_status = compute_event_status(event)
     if new_status == 'principal_review' and event.get('status') != 'principal_review':
         send_allocation_complete_notification(event)
-        
+
     event['status'] = new_status
     return jsonify(event)
 
@@ -1077,14 +1248,16 @@ def principal_review(eid: str) -> RouteResp:
                 inv['in_use'] = max(0, int(inv['in_use']) - int(ri['allocated_qty']))
     save_data(data)
     event['status'] = compute_event_status(event)
-    
+
     if d['decision'] == 'approved':
         send_approval_notification(event)
-        
+    elif d['decision'] == 'rejected':
+        send_rejection_notification(event)
+
     return jsonify(event)
 
 @app.route('/api/events/<eid>/return', methods=['POST'])
-@roles_required('it', 'reception')
+@roles_required('it', 'reception', 'pixesclub', 'fineartsclub')
 def return_items(eid: str) -> RouteResp:
     """Mark ALL items for this department as returned (one-click bulk return)."""
     role: str = str(session['role'])

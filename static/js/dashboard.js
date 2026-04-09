@@ -2,6 +2,9 @@
 let currentUser = null;
 let settings = {};
 let currentPage = null;
+let eventPageState = { 'all-events': 1, 'pending-events': 1, 'manage-users': 1, 'manage-halls': 1, 'manage-inventory': 1, 'my-events': 1, 'club-requests': 1, 'dept-inventory': 1, 'dept-returns': 1 };
+const EVENTS_PER_PAGE = 12;
+const LIST_PER_PAGE = 10;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
@@ -24,10 +27,34 @@ function defaultPage() {
 
 // ─── SHELL ────────────────────────────────────────────────────────────────────
 function renderShell() {
-  const rc = { admin: 'badge badge-admin', booker: 'badge badge-booker', it: 'badge badge-it', reception: 'badge badge-reception', principal: 'badge badge-principal' };
+  const rc = { 
+    admin: 'badge badge-admin', 
+    booker: 'badge badge-booker', 
+    it: 'badge badge-it', 
+    reception: 'badge badge-reception', 
+    principal: 'badge badge-principal',
+    pixesclub: 'badge badge-pixes',
+    fineartsclub: 'badge badge-finearts'
+  };
+  document.getElementById('userInfo').className = 'user-info';
   document.getElementById('userInfo').innerHTML = `
     <div class="user-name">${currentUser.name}</div>
     <div class="user-role ${rc[currentUser.role] || ''}">${currentUser.role.toUpperCase()}</div>`;
+
+  // Role badge in topbar
+  const roleBadge = document.getElementById('topbarRoleBadge');
+  if (roleBadge) {
+    roleBadge.textContent = currentUser.role.toUpperCase();
+    roleBadge.style.display = 'block';
+  }
+
+  // Highlight logout if admin
+  const logoutBtn = document.querySelector('.btn-logout');
+  if (logoutBtn) {
+    logoutBtn.classList.toggle('highlighted', currentUser.role === 'admin');
+    logoutBtn.innerHTML = `Sign Out`;
+  }
+
   if (settings.portal_locked) document.getElementById('lockBadge').style.display = 'flex';
   // Date display
   const d = new Date();
@@ -75,6 +102,16 @@ function getNavItems() {
     { id: 'all-events', icon: '📅', label: 'All Events' },
     { id: 'reports', icon: '📄', label: 'Reports' },
   ];
+  if (role === 'pixesclub') return [
+    { id: 'club-requests', icon: '📸', label: 'Event Requests' },
+    { id: 'club-inventory', icon: '🎒', label: 'Pixes Equipment' },
+    { id: 'club-returns', icon: '↩️', label: 'Returns' },
+  ];
+  if (role === 'fineartsclub') return [
+    { id: 'club-requests', icon: '💃', label: 'Event Requests' },
+    { id: 'club-inventory', icon: '🎭', label: 'Arts Equipment' },
+    { id: 'club-returns', icon: '↩️', label: 'Returns' },
+  ];
   return [];
 }
 
@@ -89,6 +126,8 @@ function navigateTo(page) {
     'it-requests': 'IT Requests', 'it-inventory': 'IT Inventory', 'it-returns': 'Returns',
     'rec-requests': 'Reception Requests', 'rec-inventory': 'Inventory', 'rec-returns': 'Returns',
     'pending-events': 'Pending Approval',
+    'club-requests': 'Club Event Requests', 'club-inventory': 'Club Equipment', 'club-returns': 'Club Returns',
+    'manage-schools': 'School Hierarchy',
   };
   document.getElementById('topbarTitle').textContent = titles[page] || page;
   document.getElementById('pageContent').innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading…</span></div>';
@@ -111,6 +150,9 @@ function navigateTo(page) {
     'rec-returns': () => renderReturns('reception'),
     'manage-schools': renderManageSchools,
     'pending-events': renderPendingEvents,
+    'club-requests':  () => renderClubRequests(currentUser.role),
+    'club-inventory': () => renderDeptInventory(currentUser.role),
+    'club-returns':   () => renderReturns(currentUser.role),
   };
   if (routes[page]) routes[page]();
 }
@@ -246,9 +288,13 @@ async function deleteDept(school, dept) {
 // ─── MANAGE USERS ─────────────────────────────────────────────────────────────
 async function renderManageUsers() {
   const users = await api('/api/users');
-  const roleColors = { admin: 'badge-admin', booker: 'badge-booker', it: 'badge-it', reception: 'badge-reception', principal: 'badge-principal' };
+  const roleColors = { admin: 'badge-admin', booker: 'badge-booker', it: 'badge-it', reception: 'badge-reception', principal: 'badge-principal', pixesclub: 'role-pixesclub', fineartsclub: 'role-fineartsclub' };
+  
+  const page = eventPageState['manage-users'] || 1;
+  const start = (page - 1) * LIST_PER_PAGE;
+  const paginated = users.slice(start, start + LIST_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Users</div><div class="section-sub">${users.length} system accounts</div></div>
@@ -261,7 +307,7 @@ async function renderManageUsers() {
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
           <tbody>
-            ${users.map(u => `<tr>
+            ${paginated.map(u => `<tr>
               <td style="font-weight:600">${u.name}</td>
               <td style="color:var(--muted);font-size:0.85rem">${u.email || '—'}</td>
               <td><span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:#f8fafc;padding:2px 8px;border-radius:5px;border:1px solid #e2e8f0">${u.username}</span></td>
@@ -274,6 +320,7 @@ async function renderManageUsers() {
           </tbody>
         </table>
       </div>
+      ${renderPaginationControls(users.length, page, LIST_PER_PAGE, 'manage-users')}
     </div>`;
 }
 
@@ -286,13 +333,14 @@ function openAddUser() {
       <div class="field"><label>Email</label><input id="uEmail" type="email" placeholder="user@example.com"></div>
       <div class="field"><label>Password</label><input id="uPassword" type="password" placeholder="••••••••"></div>
       <div class="field"><label>Role</label><select id="uRole">
-        <option value="booker">Booker</option><option value="it">IT Support</option>
-        <option value="reception">Reception</option><option value="principal">Principal</option><option value="admin">Admin</option>
+        <option value="booker">Booker</option>
+        <option value="it">IT Support</option>
+        <option value="reception">Reception</option>
+        <option value="principal">Principal</option>
+        <option value="pixesclub">Pixes Club</option>
+        <option value="fineartsclub">Fine Arts Club</option>
+        <option value="admin">Admin</option>
       </select></div>
-    </div>
-    <div class="modal-footer" style="padding:0;margin-top:20px;">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAddUser()">Create User</button>
     </div>`;
   openModal();
 }
@@ -336,6 +384,10 @@ async function deleteUser(uid, name) {
 // ─── MANAGE HALLS ─────────────────────────────────────────────────────────────
 async function renderManageHalls() {
   const halls = await api('/api/halls');
+  const page = eventPageState['manage-halls'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const paginated = halls.slice(start, start + EVENTS_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
@@ -346,7 +398,7 @@ async function renderManageHalls() {
         </div>
       </div>
       <div class="hall-grid">
-        ${halls.map(h => {
+        ${paginated.map(h => {
     const img = getHallImage(h);
     return `
           <div class="hall-card ${h.locked ? 'locked' : ''}">
@@ -371,6 +423,7 @@ async function renderManageHalls() {
           </div>`;
   }).join('')}
       </div>
+      ${renderPaginationControls(halls.length, page, EVENTS_PER_PAGE, 'manage-halls')}
     </div>`;
 }
 function openAddHall() {
@@ -473,6 +526,10 @@ async function deleteHall(hid, name) {
 // ─── MANAGE INVENTORY ─────────────────────────────────────────────────────────
 async function renderManageInventory() {
   const items = await api('/api/inventory');
+  const page = eventPageState['manage-inventory'] || 1;
+  const start = (page - 1) * LIST_PER_PAGE;
+  const paginated = items.slice(start, start + LIST_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
     
     <div class="section">
@@ -485,14 +542,12 @@ async function renderManageInventory() {
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Name</th><th>Department</th><th>Total Stock</th><th>In Use</th><th>Available</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Department</th><th>In Use Alone</th><th>Actions</th></tr></thead>
           <tbody>
-            ${items.map(i => `<tr>
+            ${paginated.map(i => `<tr>
               <td style="font-weight:700">${i.name}</td>
-              <td><span class="badge" style="background-color:${i.dept === 'it' ? '#6366f1' : '#10b981'};color:#fff">${i.dept.toUpperCase()}</span></td>
-              <td>${i.stock_qty}</td>
-              <td><span style="color:var(--gold);font-weight:700">${i.in_use}</span></td>
-              <td><span style="color:var(--green);font-weight:700">${i.available_qty}</span></td>
+              <td><span class="badge" style="background-color:${i.dept === 'it' ? '#6366f1' : (i.dept === 'reception' ? '#10b981' : (i.dept === 'pixesclub' ? '#38bdf8' : '#fb7185'))};color:#fff">${i.dept.toUpperCase()}</span></td>
+              <td><span class="in-use-pill">${i.in_use}</span></td>
               <td><div class="td-actions">
                 <button class="btn btn-outline btn-sm" onclick="openEditInventory('${i.id}')">Edit Stock</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteInventory('${i.id}','${i.name}')">Delete</button>
@@ -501,6 +556,7 @@ async function renderManageInventory() {
           </tbody>
         </table>
       </div>
+      ${renderPaginationControls(items.length, page, LIST_PER_PAGE, 'manage-inventory')}
     </div>`;
 }
 function openAddInventory() {
@@ -508,7 +564,12 @@ function openAddInventory() {
   document.getElementById('modalBody').innerHTML = `
     <div class="form-grid">
       <div class="field"><label>Item Name</label><input id="invName" placeholder="Laptop"></div>
-      <div class="field"><label>Department</label><select id="invDept"><option value="it">IT</option><option value="reception">Reception</option></select></div>
+      <div class="field"><label>Department</label><select id="invDept">
+        <option value="it">IT Support</option>
+        <option value="reception">Reception</option>
+        <option value="pixesclub">Pixes Club</option>
+        <option value="fineartsclub">Fine Arts Club</option>
+      </select></div>
       <div class="field"><label>Stock Quantity</label><input id="invQty" type="number" placeholder="10"></div>
     </div>
     <div class="modal-footer" style="padding:0;margin-top:20px;">
@@ -583,6 +644,9 @@ async function togglePortalLock() {
 async function renderMyEvents() {
   const events = await api('/api/events');
   events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const page = eventPageState['my-events'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const paginated = events.slice(start, start + EVENTS_PER_PAGE);
   const pc = document.getElementById('pageContent');
   pc.innerHTML = `
     <div class="section">
@@ -593,7 +657,10 @@ async function renderMyEvents() {
           <button class="btn btn-primary" onclick="navigateTo('new-event')">\u{2795} New Event</button>
         </div>
       </div>
-      ${events.length === 0 ? emptyState('\u{1F4C5}', 'No events yet', 'Create your first event proposal to get started.') : eventFilterBar('myEventsGrid', 'booker', events) + '<div class="cards-grid" id="myEventsGrid">' + events.map(e => eventCard(e, 'booker')).join('') + '</div>'}
+      ${events.length === 0 ? emptyState('\u{1F4C5}', 'No events yet', 'Create your first event proposal to get started.') :
+      eventFilterBar('myEventsGrid', 'booker', events) +
+      '<div class="cards-grid" id="myEventsGrid">' + paginated.map(e => eventCard(e, 'booker')).join('') + '</div>' +
+      renderPaginationControls(events.length, page, EVENTS_PER_PAGE, 'my-events')}
     </div>`;
 }
 
@@ -633,6 +700,8 @@ async function renderNewEvent() {
   const availHalls = halls.filter(h => !h.locked);
   const itItems = inventory.filter(i => i.dept === 'it');
   const recItems = inventory.filter(i => i.dept === 'reception');
+  const pixesItems = inventory.filter(i => i.dept === 'pixesclub');
+  const faItems = inventory.filter(i => i.dept === 'fineartsclub');
 
   document.getElementById('pageContent').innerHTML = `
   <div class="wizard-container">
@@ -648,6 +717,8 @@ async function renderNewEvent() {
         <div class="wstep" id="ws2" onclick="gotoStep(2)"><span>2</span> Hall</div>
         <div class="wstep" id="ws3" onclick="gotoStep(3)"><span>3</span> IT</div>
         <div class="wstep" id="ws4" onclick="gotoStep(4)"><span>4</span> Reception</div>
+        <div class="wstep" id="ws5" onclick="gotoStep(5)"><span>5</span> 📸 Pixes</div>
+        <div class="wstep" id="ws6" onclick="gotoStep(6)"><span>6</span> 💃 Arts</div>
       </div>
     </div>
     <div class="wizard-body">
@@ -829,6 +900,38 @@ async function renderNewEvent() {
         </div>
         <div class="wizard-nav">
           <button class="btn btn-outline" onclick="gotoStep(3)">← Back</button>
+          <button class="btn btn-primary" onclick="gotoStep(5)">Next: Pixes Club →</button>
+        </div>
+      </div>
+
+      <!-- PAGE 5: PIXES CLUB -->
+      <div class="wpage" id="wpage5" style="display:none">
+        <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:14px 18px;margin-bottom:16px;border:1.5px solid #7dd3fc">
+          <div style="font-size:0.85rem;font-weight:800;color:#0369a1">📸 Pixes Club — Photography Requirements</div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px">Only available if Photography was selected in Step 1. Leave all at 0 if not needed.</div>
+        </div>
+        <div class="req-table" id="pixesReqTable">
+          <div class="req-header"><span>Photography Item</span><span style="text-align:center">Available</span><span style="text-align:center">Qty</span></div>
+          ${pixesItems.length ? pixesItems.map(i => reqRow(i)).join('') : '<div style="padding:20px;text-align:center;color:var(--muted)">No Pixes Club items available</div>'}
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="gotoStep(4)">← Back</button>
+          <button class="btn btn-primary" onclick="gotoStep(6)">Next: Fine Arts →</button>
+        </div>
+      </div>
+
+      <!-- PAGE 6: FINE ARTS CLUB -->
+      <div class="wpage" id="wpage6" style="display:none">
+        <div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border-radius:12px;padding:14px 18px;margin-bottom:16px;border:1.5px solid #d8b4fe">
+          <div style="font-size:0.85rem;font-weight:800;color:#7e22ce">💃 Fine Arts Club — Dance Performance Requirements</div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px">Only available if Dance Performance was selected in Step 1. Leave all at 0 if not needed.</div>
+        </div>
+        <div class="req-table" id="faReqTable">
+          <div class="req-header"><span>Fine Arts Item</span><span style="text-align:center">Available</span><span style="text-align:center">Qty</span></div>
+          ${faItems.length ? faItems.map(i => reqRow(i)).join('') : '<div style="padding:20px;text-align:center;color:var(--muted)">No Fine Arts items available</div>'}
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="gotoStep(5)">← Back</button>
           <button class="btn btn-primary" onclick="submitNewEvent()">🚀 Submit Proposal</button>
         </div>
       </div>
@@ -844,14 +947,52 @@ function resetNewEventForm() {
 }
 
 function gotoStep(n) {
-  // If moving to step 2, validate step 1 first
   if (n === 2 && !validateStep1()) return;
+  
+  const getValue = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value === 'yes';
+  const hasPhotos = getValue('evPhotos');
+  const hasDance = getValue('evDance');
+  
+  // Detection for forward/backward skip
+  let current = 1;
+  const activeWs = document.querySelector('.wstep.active');
+  if (activeWs) {
+      current = parseInt(activeWs.id.replace('ws', ''));
+  }
 
-  for (let i = 1; i <= 4; i++) {
+  // Smart Skip Pixes (Step 5)
+  if (n === 5 && !hasPhotos) {
+      return n > current ? gotoStep(6) : gotoStep(4);
+  }
+  // Smart Skip Arts (Step 6)
+  if (n === 6 && !hasDance) {
+      if (n > current) {
+          // If moving forward from 5 or 4, and no Arts, and we are at the end...
+          // If current was 5 and no arts, we submit. If current was 4 and no photos/no arts, we submit.
+          // However, better to just let it fall through to a confirm.
+          if (confirm('No club requirements selected. Propose event now?')) {
+              submitNewEvent();
+          }
+          return;
+      } else {
+          return gotoStep(5);
+      }
+  }
+
+  const total = 6;
+  for (let i = 1; i <= total; i++) {
     const pg = document.getElementById('wpage' + i);
     const ws = document.getElementById('ws' + i);
+    
+    if (ws) {
+        // Hide skipped steps in tracker
+        if (i === 5) ws.style.display = hasPhotos ? 'flex' : 'none';
+        if (i === 6) ws.style.display = hasDance ? 'flex' : 'none';
+        
+        ws.classList.toggle('active', i === n);
+        ws.classList.toggle('done', i < n);
+    }
     if (pg) pg.style.display = (i === n) ? '' : 'none';
-    if (ws) { ws.classList.toggle('active', i === n); ws.classList.toggle('done', i < n); }
   }
 }
 
@@ -991,16 +1132,17 @@ function yesNoRow(id, icon, label) {
 
 function hallSelectCard(h) {
   const img = getHallImage(h);
-  const tl = getHallTypeLabel(h);
   return `
   <div class="hall-pick-card" id="hcard_${h.id}" onclick="selectHall('${h.id}','${h.name.replace(/'/g, '&#39;')}',${h.capacity})">
     <div class="hall-pick-img" style="background-image:url('${img}')">
       <div class="hall-pick-overlay"></div>
-      <div class="hall-pick-cap">${h.capacity} seats</div>
     </div>
     <div class="hall-pick-body">
       <div class="hall-pick-name">${h.name}</div>
-      <div class="hall-pick-type" style="color:${tl.color};background:${tl.bg}">${tl.label} · ${h.type}</div>
+      <div class="hall-meta" style="margin-bottom: 0;">
+        <span class="capacity-tag">👥 ${h.capacity} Seats</span>
+        <span>📍 ${h.type}</span>
+      </div>
     </div>
   </div>`;
 }
@@ -1213,55 +1355,254 @@ async function submitNewEvent() {
 // ─── ALL EVENTS ───────────────────────────────────────────────────────────────
 async function renderAllEvents() {
   const events = await api('/api/events');
-  events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  events.sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
   const role = currentUser.role;
+  const page = eventPageState['all-events'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const paginated = events.slice(start, start + EVENTS_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">All Events</div><div class="section-sub">${events.length} total</div></div>
+        <div><div class="section-title">Event Master Database</div><div class="section-sub">${events.length} total events tracked</div></div>
         <div class="section-actions">
-          <button class="btn btn-report btn-sm" onclick="downloadReport('all-events')">\u{1F4C4} Full Report</button>
+          <button class="btn btn-report btn-sm" onclick="downloadReport('all-events')">📊 System Report</button>
         </div>
       </div>
-      ${events.length === 0 ? emptyState('\u{1F4C5}', 'No events', 'No events have been created yet.') : eventFilterBar('allEventsGrid', role, events) + '<div class="cards-grid" id="allEventsGrid">' + events.map(e => eventCard(e, role)).join('') + '</div>'}
+      ${events.length === 0 ? emptyState('📅', 'Empty Database', 'No events have been recorded yet.') : 
+      eventFilterBar('allEventsGrid', role, events) + 
+      '<div class="cards-grid-scroll" id="allEventsGrid">' + 
+      paginated.map(e => eventCard(e, role)).join('') + 
+      '</div>' + 
+      renderPaginationControls(events.length, page, EVENTS_PER_PAGE, 'all-events')}
     </div>`;
+}
+
+function changePage(context, delta) {
+  eventPageState[context] = (eventPageState[context] || 1) + delta;
+  if (context === 'all-events') renderAllEvents();
+  if (context === 'pending-events') renderPendingEvents();
+  if (context === 'my-events') renderMyEvents();
+  if (context === 'club-requests') renderClubRequests(currentUser.role);
+  if (context === 'manage-users') renderManageUsers();
+  if (context === 'manage-halls') renderManageHalls();
+  if (context === 'manage-inventory') renderManageInventory();
+  if (context === 'dept-inventory') {
+      const role = currentUser.role;
+      const dept = (role === 'it' || role === 'reception') ? role : (role === 'pixesclub' ? 'pixesclub' : 'fineartsclub');
+      renderDeptInventory(dept);
+  }
+  if (context === 'dept-returns') {
+      const role = currentUser.role;
+      const dept = (role === 'it' || role === 'reception') ? role : (role === 'pixesclub' ? 'pixesclub' : 'fineartsclub');
+      renderReturns(dept);
+  }
+  if (context.startsWith('dept-requests-')) {
+    const dept = context.replace('dept-requests-', '');
+    renderDeptRequests(dept);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderPaginationControls(total, page, perPage, context) {
+  const maxPage = Math.ceil(total / perPage);
+  if (maxPage <= 1) return '';
+  return `
+    <div class="pagination-bar">
+      <button class="btn-page" ${page === 1 ? 'disabled' : ''} onclick="changePage('${context}', -1)">
+        ← Previous
+      </button>
+      <div class="page-info">Page ${page} of ${maxPage}</div>
+      <button class="btn-page" ${page >= maxPage ? 'disabled' : ''} onclick="changePage('${context}', 1)">
+        Next Page →
+      </button>
+    </div>`;
+}
+
+function eventCard(e, role) {
+  const statusBadge = {
+    dept_review: '<span class="em-badge" style="background:#e2e8f0;color:#475569;font-size:0.6rem;padding:3px 8px;border-radius:4px">DEPT REVIEW</span>',
+    principal_review: '<span class="em-badge" style="background:#e2e8f0;color:#475569;font-size:0.6rem;padding:3px 8px;border-radius:4px">PRINCIPAL</span>',
+    approved: '<span class="em-badge" style="background:var(--gold-lt);color:var(--gold);font-size:0.6rem;padding:3px 8px;border-radius:4px">APPROVED</span>',
+    rejected: '<span class="em-badge" style="background:var(--red-lt);color:var(--red);font-size:0.6rem;padding:3px 8px;border-radius:4px">REJECTED</span>',
+  }[e.status] || '';
+
+  let actions = '';
+  if (role === 'admin') {
+    actions = `
+      <button class="btn btn-icon btn-sm" onclick="event.stopPropagation();adminDeleteEvent('${e.id}')" title="Delete">🗑️</button>
+      <button class="btn btn-icon btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')" title="Report">📄</button>
+      ${e.status !== 'approved' && e.status !== 'rejected' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();adminApproveEvent('${e.id}')">Quick Approve</button>` : ''}
+    `;
+  } else if (role === 'principal' && e.status === 'principal_review') {
+    actions = `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();openPrincipalModal('${e.id}')">Review Decision</button>`;
+  } else if (role === 'booker' && e.status === 'dept_review') {
+    actions = `<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openEditEventModal('${e.id}')">Edit</button>
+               <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cancelEvent('${e.id}')">Cancel</button>`;
+  } else if (role === 'it' || role === 'reception') {
+    if (e.status === 'dept_review') {
+      const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
+      actions = myPending.length > 0 ?
+        `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">📦 Allocate</button>` :
+        `<span class="em-badge" style="background:var(--green-lt);color:var(--green)">✔ Allocated</span>`;
+    }
+  } else if (role === 'pixesclub' || role === 'fineartsclub') {
+    if (e.status === 'dept_review') {
+      const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
+      actions = myPending.length > 0 ? `
+        <button class="btn btn-success btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">✅ Accept</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();rejectClubItems('${e.id}','${role}')">❌ Deny</button>` :
+        `<span class="em-badge" style="background:var(--green-lt);color:var(--green)">✔ Approved</span>`;
+    }
+  }
+
+  let schoolStr = '';
+  if (e.departments && e.departments.length > 0 && e.departments[0].school) {
+    schoolStr = `<span style="color:var(--muted);font-weight:700;margin-left:8px;font-size:0.75rem;padding:2px 6px;background:var(--bg);border-radius:4px">🏛️ ${e.departments[0].school.toUpperCase()}</span>`;
+  }
+
+  return `
+    <div class="event-manage-card status-${e.status}" onclick="viewEventDetail('${e.id}')" style="cursor:pointer">
+      <div class="em-header">
+        <div>
+           ${statusBadge}
+           <div class="em-title">${e.title}</div>
+        </div>
+        <div style="font-size:0.75rem; font-weight:700; color:var(--muted)">#${e.id.slice(-4).toUpperCase()}</div>
+      </div>
+      
+      <div style="font-size:0.8rem; color:var(--text); margin-bottom:12px; font-weight:600">👤 ${e.created_by_name || 'System'}${schoolStr}</div>
+      
+      <div class="em-meta">
+        <div class="em-meta-item">📅 ${e.date}</div>
+        <div class="em-meta-item">⏰ ${e.time_slot.split('-')[0]}</div>
+        ${(role !== 'it' && role !== 'reception') ? `<div class="em-meta-item">🏛️ ${e.hall_name}</div>` : ''}
+        <div class="em-meta-item">👥 ${e.expected_count}</div>
+      </div>
+
+      <div class="em-actions" style="border-top:1px dashed var(--border); padding-top:10px">
+        ${actions}
+        <button class="btn btn-success btn-sm" onclick="event.stopPropagation();viewEventDetail('${e.id}')" style="margin-left:auto">Details</button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── CLUB REQUESTS (PIXES + FINE ARTS) ───────────────────────────────────────
+async function renderClubRequests(role) {
+  const events = await api('/api/events');
+  const relevant = events.filter(e =>
+    e.requested_items.some(i => i.dept === role) &&
+    (e.status === 'dept_review' || e.status === 'principal_review' || e.status === 'approved')
+  );
+  relevant.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const pending = relevant.filter(e => e.requested_items.some(i => i.dept === role && !i.dept_approved));
+  const done    = relevant.filter(e => e.requested_items.every(i => i.dept !== role || i.dept_approved));
+  const clubLabel = role === 'pixesclub' ? '📸 Pixes Club' : '💃 Fine Arts Club';
+  const page = eventPageState['club-requests'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const pagPending = pending.slice(start, start + EVENTS_PER_PAGE);
+
+  document.getElementById('pageContent').innerHTML = `
+    ${getUpcomingEventsHtml(events)}
+    <div class="section">
+      <div class="section-header">
+        <div><div class="section-title">${clubLabel} — Pending Approvals</div><div class="section-sub">${pending.length} event(s) awaiting club approval</div></div>
+      </div>
+      ${pending.length === 0 ? emptyState('✅', 'All done!', 'No pending requests for your club.') :
+      '<div class="cards-grid">' + pagPending.map(e => eventCard(e, role)).join('') + '</div>' +
+      renderPaginationControls(pending.length, page, EVENTS_PER_PAGE, 'club-requests')}
+    </div>
+    ${done.length > 0 ? `<div class="section"><div class="section-header"><div class="section-title">Processed</div></div>
+      <div class="cards-grid">${done.slice(0,4).map(e => eventCard(e, role)).join('')}</div>
+    </div>` : ''}`;
 }
 
 // ─── PENDING EVENTS (PRINCIPAL) ───────────────────────────────────────────────
 async function renderPendingEvents() {
   const events = await api('/api/events');
-  events.sort((a, b) => new Date(a.date) - new Date(b.date));
   const pending = events.filter(e => e.status === 'principal_review');
   const reviewed = events.filter(e => e.status !== 'principal_review');
+  
+  pending.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  const page = eventPageState['pending-events'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const paginated = pending.slice(start, start + EVENTS_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
-    
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Events Awaiting Approval</div><div class="section-sub">${pending.length} pending</div></div>
-        <div class="section-actions">
-          <button class="btn btn-report btn-sm" onclick="downloadReport('principal')">\u{1F4C4} Decision Report</button>
-        </div>
+        <div><div class="section-title">Critical Approvals</div><div class="section-sub">${pending.length} events awaiting your decision</div></div>
       </div>
-      ${pending.length === 0 ? emptyState('\u{2705}', 'All clear!', 'No events are pending your review.') : eventFilterBar('pendingGrid', 'principal', pending) + '<div class="cards-grid" id="pendingGrid">' + pending.map(e => eventCard(e, 'principal')).join('') + '</div>'}
+      
+      <div class="filter-bar">
+        <div class="filter-search-wrap">
+          <span class="filter-search-icon">🔍</span>
+          <input type="text" class="filter-search" id="pendingSearch" placeholder="Search events, halls..." oninput="filterPendingEvents()">
+        </div>
+        <select class="filter-sort" id="pendingSort" onchange="sortPendingEvents()">
+          <option value="date">📅 Sort by Date (Earliest)</option>
+          <option value="dept">🏫 Sort by Department</option>
+          <option value="title">📝 Sort by Title</option>
+        </select>
+      </div>
+
+      <div id="pendingEventsGridContainer">
+        ${pending.length === 0 ? emptyState('✨', 'Inbox Zero', 'No events are currently awaiting approval.') : 
+        '<div class="cards-grid-scroll" id="pendingEventsGrid">' + 
+        paginated.map(e => eventCard(e, 'principal')).join('') + 
+        '</div>' + 
+        renderPaginationControls(pending.length, page, EVENTS_PER_PAGE, 'pending-events')}
+      </div>
     </div>
-    ${reviewed.length > 0 ? '<div class="section"><div class="section-header"><div class="section-title">Previously Reviewed</div></div>' + eventFilterBar('reviewedGrid', 'principal', reviewed) + '<div class="cards-grid" id="reviewedGrid">' + reviewed.map(e => eventCard(e, 'principal')).join('') + '</div></div>' : ''}`;
+    
+    ${reviewed.length > 0 ? `
+    <div class="section" style="margin-top:40px; border-top:1px solid var(--border); padding-top:40px">
+      <div class="section-header"><div class="section-title">Decision History</div></div>
+      <div class="cards-grid-scroll">
+        ${reviewed.slice(0, 4).map(e => eventCard(e, 'principal')).join('')}
+      </div>
+      ${reviewed.length > 4 ? `<button class="btn btn-outline" style="margin-top:16px; width:100%" onclick="navigateTo('all-events')">View All History</button>` : ''}
+    </div>` : ''}`;
+}
+
+// Helper for Principal Filtering/Sorting
+function filterPendingEvents() { sortPendingEvents(); }
+async function sortPendingEvents() {
+    const events = await api('/api/events');
+    let pending = events.filter(e => e.status === 'principal_review');
+    const query = document.getElementById('pendingSearch')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('pendingSort')?.value || 'date';
+    
+    if (query) {
+        pending = pending.filter(e => e.title.toLowerCase().includes(query) || e.hall_name.toLowerCase().includes(query));
+    }
+    
+    if (sortBy === 'dept') {
+        pending.sort((a, b) => a.departments[0]?.department.localeCompare(b.departments[0]?.department));
+    } else if (sortBy === 'title') {
+        pending.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+        pending.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    
+    const grid = document.getElementById('pendingEventsGrid');
+    if (grid) grid.innerHTML = pending.map(e => eventCard(e, 'principal')).join('');
 }
 
 // ─── DEPT REQUESTS ────────────────────────────────────────────────────────────
 async function renderDeptRequests(dept) {
   const events = await api('/api/events');
-  
   const relevant = events.filter(e => e.requested_items.some(i => i.dept === dept) && (e.status === 'dept_review' || e.status === 'principal_review' || e.status === 'approved'));
   relevant.sort((a, b) => new Date(a.date) - new Date(b.date));
   const pending = relevant.filter(e => e.requested_items.some(i => i.dept === dept && !i.dept_approved));
   const done = relevant.filter(e => e.requested_items.every(i => i.dept !== dept || i.dept_approved));
+  const page = eventPageState['dept-requests-' + dept] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const pagPending = pending.slice(start, start + EVENTS_PER_PAGE);
   document.getElementById('pageContent').innerHTML = `
- 
     ${getUpcomingEventsHtml(events)}
-
-    
-   
     <div class="section">
       <div class="section-header">
         <div><div class="section-title">Pending Inventory Requests</div><div class="section-sub">${pending.length} awaiting your allocation</div></div>
@@ -1270,56 +1611,84 @@ async function renderDeptRequests(dept) {
         </div>
       </div>
       ${pending.length === 0 ? emptyState('✅', 'All done!', 'No pending requests for your department.') :
-      `<div class="cards-grid">${pending.map(e => eventCard(e, dept)).join('')}</div>`}
+      `<div class="cards-grid">${pagPending.map(e => eventCard(e, dept)).join('')}</div>` +
+      renderPaginationControls(pending.length, page, EVENTS_PER_PAGE, 'dept-requests-' + dept)}
     </div>
     ${done.length > 0 ? `
     <div class="section">
       <div class="section-header"><div class="section-title">Processed</div></div>
-      <div class="cards-grid">${done.map(e => eventCard(e, dept)).join('')}</div>
+      <div class="cards-grid">${done.slice(0,4).map(e => eventCard(e, dept)).join('')}</div>
     </div>`: ''}`;
 }
 
 // ─── DEPT INVENTORY ───────────────────────────────────────────────────────────
 async function renderDeptInventory(dept) {
   const items = await api('/api/inventory?dept=' + dept);
+  const page = eventPageState['dept-inventory'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const paginated = items.slice(start, start + EVENTS_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">${dept === 'it' ? 'IT' : 'Reception'} Command Center — Inventory</div></div>
+        <div><div class="section-title">${dept === 'it' ? 'IT' : (dept === 'reception' ? 'Reception' : (dept === 'pixesclub' ? 'Pixes Club' : 'Fine Arts Club'))} Command Center — Inventory</div></div>
         <div class="section-actions">
           <button class="btn btn-report btn-sm" onclick="downloadReport('inventory-${dept}')">📄 Export</button>
           <button class="btn btn-primary" onclick="openAddDeptInventory('${dept}')">➕ Add Item</button>
         </div>
       </div>
-      <div class="cards-grid">
-        ${items.map((i, idx) => {
+      <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));">
+        ${paginated.map((i, idx) => {
           const grads = ['grad-violet', 'grad-ocean', 'grad-emerald', 'grad-sunset', 'grad-berry', 'grad-midnight'];
           const gradClass = grads[idx % grads.length];
+          const isLowStock = (i.stock_qty - i.in_use) <= 5;
           return `
-          <div class="inv-card ${gradClass}">
-            <div class="inv-header">
-              <div class="inv-name" style="font-weight:800; color:#fff">${i.name}</div>
-              <span class="badge" style="background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3)">${dept.toUpperCase()}</span>
-            </div>
-            <div class="inv-stats">
-              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
-                <div class="stat-label" style="color:rgba(255,255,255,0.7)">Total</div>
-                <div class="stat-value" style="color:#fff">${i.stock_qty}</div>
+          <div class="inv-card-premium ${gradClass}">
+            <div class="card-glass-effect"></div>
+            <div class="inv-card-inner">
+              <div class="inv-header">
+                <div class="inv-name-group">
+                  <div class="inv-type-icon">${dept === 'it' ? '🖥️' : (dept === 'reception' ? '🛎️' : (dept === 'pixesclub' ? '📸' : '🎭'))}</div>
+                  <div class="inv-name-text">${i.name}</div>
+                </div>
+                ${isLowStock ? '<span class="stock-alert-pill">⚠️ Low Stock</span>' : ''}
               </div>
-              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
-                <div class="stat-label" style="color:rgba(255,255,255,0.7)">In Use</div>
-                <div class="stat-value" style="color:#fff">${i.in_use}</div>
+              
+              <div class="inv-main-stats">
+                ${i.stock_qty > 900 ? `
+                <div class="inv-stat-circle" style="width: auto; padding: 0 24px; border-radius: 40px; border-width: 3px;">
+                  <div class="stat-circle-val" style="font-size: 2.5rem; margin-top: -8px;">∞</div>
+                  <div class="stat-circle-lbl">UNLIMITED</div>
+                </div>
+                ` : `
+                <div class="inv-stat-circle">
+                  <div class="stat-circle-val">${i.stock_qty - i.in_use}</div>
+                  <div class="stat-circle-lbl">AVAILABLE</div>
+                </div>
+                `}
+                <div class="inv-stat-details">
+                  <div class="stat-detail-item">
+                    <span class="dot" style="background:#fff"></span>
+                    <span class="lbl">Total Pool</span>
+                    <span class="val">${i.stock_qty}</span>
+                  </div>
+                  <div class="stat-detail-item">
+                    <span class="dot" style="background:rgba(255,255,255,0.5)"></span>
+                    <span class="lbl">Currently Used</span>
+                    <span class="val">${i.in_use}</span>
+                  </div>
+                </div>
               </div>
-              <div class="stat-box" style="background:rgba(255,255,255,0.1); border:none">
-                <div class="stat-label" style="color:rgba(255,255,255,0.7)">Avail</div>
-                <div class="stat-value" style="color:#fff">${i.stock_qty - i.in_use}</div>
+
+              <div class="inv-footer-actions">
+                <button class="btn-inv-action" onclick="openEditInventory('${i.id}')">
+                  <span>⚙️</span> Manage Stock
+                </button>
               </div>
-            </div>
-            <div style="margin-top:16px">
-              <button class="btn btn-sm" style="width:100%; justify-content:center; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3)" onclick="openEditInventory('${i.id}')">Modify Stock</button>
             </div>
           </div>`}).join('')}
       </div>
+      ${renderPaginationControls(items.length, page, EVENTS_PER_PAGE, 'dept-inventory')}
     </div>`;
 }
 function openAddDeptInventory(dept) {
@@ -1346,57 +1715,89 @@ async function renderReturns(dept) {
   const events = await api('/api/events');
   const returnable = events.filter(e => e.status === 'approved' && e.requested_items.some(i => i.dept === dept && i.dept_approved && !i.returned));
   const returned = events.filter(e => e.requested_items.some(i => i.dept === dept && i.returned === true));
+  
+  const page = eventPageState['dept-returns'] || 1;
+  const start = (page - 1) * EVENTS_PER_PAGE;
+  const pagReturned = returned.slice(start, start + EVENTS_PER_PAGE);
+
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Pending Equipment Returns</div><div class="section-sub">Collect and mark items as returned after event</div></div>
+        <div><div class="section-title">Pending Equipment Returns</div><div class="section-sub">Collect and mark items as returned after event completion</div></div>
         <div class="section-actions">
-          <button class="btn btn-report btn-sm" onclick="downloadReport('returns-${dept}')">📄 Returns Report</button>
+          <button class="btn btn-report btn-sm" onclick="downloadReport('returns-${dept}')">📄 Returns History Report</button>
         </div>
       </div>
-      ${returnable.length === 0 ? emptyState('📦', 'All items returned', 'Nothing pending for return right now.') :
+      ${returnable.length === 0 ? emptyState('📦', 'All items returned', 'Excellent! No pending equipment returns for your department.') :
       `<div class="cards-grid">${returnable.map(e => {
         const myItems = e.requested_items.filter(i => i.dept === dept && i.dept_approved && !i.returned);
         return `
-          <div class="event-card status-approved" style="border-top: 4px solid #10b981;">
-            <div class="event-card-header">
-              <div class="event-title">${e.title}</div>
-              <span class="badge badge-approved">Return Pending</span>
+          <div class="event-card-return">
+            <div class="return-card-glow"></div>
+            <div class="return-card-header">
+              <div class="return-title-box">
+                <div class="return-event-title">${e.title}</div>
+                <div class="return-event-date">📅 Event Date: ${e.date}</div>
+              </div>
+              <div class="return-status-tag">⚠️ PENDING RETURN</div>
             </div>
-            <div class="event-meta">
-              <span class="event-meta-item">📅 ${e.date}</span>
-              <span class="event-meta-item">🏛️ ${e.hall_name}</span>
-              <span class="event-meta-item">👤 ${e.created_by_name}</span>
+            
+            <div class="return-items-box">
+              <div class="return-items-label">ITEMS TO COLLECT:</div>
+              <div class="return-items-list">
+                ${myItems.map(i => `
+                  <div class="return-item-row">
+                    <span class="item-name">${i.item_name}</span>
+                    <span class="item-qty">× ${i.allocated_qty}</span>
+                  </div>`).join('')}
+              </div>
             </div>
-            <div style="margin-top:14px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
-              <div style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Allocated Items:</div>
-              ${myItems.map(i => `
-                <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.85rem;border-bottom:1px solid #f1f5f9">
-                  <span style="font-weight:600;color:#1e293b">${i.item_name}</span>
-                  <span style="color:#10b981;font-weight:700">× ${i.allocated_qty}</span>
-                </div>`).join('')}
-            </div>
-            <div style="margin-top:16px">
-              <button class="btn btn-primary" style="width:100%; border-radius:12px; font-weight:800; padding:12px;" onclick="processReturn('${e.id}','${dept}')">
-                ↩️ Confirm All Items Returned
+
+            <div class="return-card-footer">
+              <div class="booker-info">
+                <div class="booker-avatar">${e.created_by_name.charAt(0)}</div>
+                <div class="booker-name">Booked by ${e.created_by_name}</div>
+              </div>
+              <button class="btn-confirm-return" onclick="processReturn('${e.id}','${dept}')">
+                ↩️ Confirm All Collected
               </button>
             </div>
           </div>`;
       }).join('')}`}
     </div>
+
     ${returned.length > 0 ? `
     <div class="section">
-      <div class="section-header"><div class="section-title">Return Histories</div></div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Event</th><th>Date</th><th>Items Returned</th><th>Status</th></tr></thead>
-        <tbody>${returned.map(e => `<tr>
-          <td style="font-weight:600">${e.title}</td><td>${e.date}</td>
-          <td>${e.requested_items.filter(i => i.dept === dept && i.returned).map(i =>
-            `<div style="font-size:0.8rem;color:var(--muted)">${i.item_name} × <span style="font-weight:700;color:var(--green)">${i.returned_qty || i.allocated_qty}</span></div>`
-          ).join('')}</td>
-          <td><span class="badge badge-approved">✅ Returned</span></td>
-        </tr>`).join('')}</tbody></table>
+      <div class="section-header">
+        <div><div class="section-title">Recently Returned Histories</div></div>
       </div>
+      <div class="history-cards-grid">
+        ${pagReturned.map(e => {
+            const myReturnedItems = e.requested_items.filter(i => i.dept === dept && i.returned);
+            return `
+            <div class="history-receipt-card">
+              <div class="receipt-header">
+                <div class="receipt-icon">📜</div>
+                <div class="receipt-info">
+                  <div class="receipt-event">${e.title}</div>
+                  <div class="receipt-date">Returned on ${e.date}</div>
+                </div>
+              </div>
+              <div class="receipt-body">
+                ${myReturnedItems.map(i => `
+                  <div class="receipt-item">
+                    <span>${i.item_name}</span>
+                    <span class="qty-tag">qty: ${i.returned_qty || i.allocated_qty}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="receipt-footer">
+                <span class="status-success">✔️ FULLY RETURNED</span>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+      ${renderPaginationControls(returned.length, page, EVENTS_PER_PAGE, 'dept-returns')}
     </div>` : ''}`;
 }
 
@@ -1408,20 +1809,33 @@ async function processReturn(eid, dept) {
 
 function renderProgressChart(e) {
   const status = e.status;
+
+  // 5-step workflow: Booker → IT → Reception → Principal → Approved
   const stages = [
-    { id: 'booked', label: 'Booked' },
-    { id: 'dept_review', label: 'Dept Review' },
-    { id: 'principal_review', label: 'Principal Review' },
-    { id: 'approved', label: 'Approved' }
+    { id: 'booked',          label: 'Booker' },
+    { id: 'it',              label: 'IT' },
+    { id: 'reception',       label: 'Reception' },
+    { id: 'principal',       label: 'Principal' },
+    { id: 'approved',        label: 'Approved' }
   ];
-  
-  let currentIdx = 0;
-  if (status === 'dept_review') currentIdx = 1;
-  else if (status === 'principal_review') currentIdx = 2;
-  else if (status === 'approved') currentIdx = 3;
-  
+
   if (status === 'rejected') {
-    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">❌ Event Proposal Rejected</div>`;
+    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">❌ Event Proposal Rejected by Principal</div>`;
+  }
+  if (status === 'cancelled') {
+    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">🚫 Event Cancelled</div>`;
+  }
+
+  // Determine which step is active based on status + IT/Reception sub-status
+  let currentIdx = 0;
+  if (status === 'dept_review') {
+    const ri = e.requested_items || [];
+    const itDone = ri.filter(i => i.dept === 'it').every(i => i.dept_approved || i.dept_rejected);
+    currentIdx = itDone ? 2 : 1;  // IT done → Reception active; else IT active
+  } else if (status === 'principal_review') {
+    currentIdx = 3;
+  } else if (status === 'approved') {
+    currentIdx = 4;
   }
 
   return `
@@ -1457,87 +1871,7 @@ function renderMiniStepper(status) {
 }
 
 // ─── EVENT CARD ────────────────────────────────────────────────────────────────
-function eventCard(e, role) {
-  const statusBadge = {
-    dept_review: '<span class="badge badge-pending">⏳ Dept Review</span>',
-    principal_review: '<span class="badge badge-principal">👤 Principal Review</span>',
-    approved: '<span class="badge badge-approved">✅ Approved</span>',
-    rejected: '<span class="badge badge-rejected">❌ Rejected</span>',
-  }[e.status] || '';
 
-  // Primary action button (shown in footer)
-  let primaryBtn = '';
-  if (role === 'booker' || role === 'admin' || role === 'principal') {
-    if (role === 'principal' && e.status === 'principal_review') {
-      primaryBtn = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPrincipalModal('${e.id}')">Review & Decide</button>`;
-    }
-    if (role === 'booker' && e.status === 'dept_review') {
-      primaryBtn += `<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openEditEventModal('${e.id}')">Edit</button>`;
-      primaryBtn += `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cancelEvent('${e.id}')">Cancel</button>`;
-    }
-    if (role === 'admin') {
-      if (e.status !== 'approved' && e.status !== 'rejected') {
-        primaryBtn += `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();adminApproveEvent('${e.id}')">Approve</button>`;
-      }
-      primaryBtn += `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();adminDeleteEvent('${e.id}')">Delete</button>`;
-      primaryBtn += `<button class="btn btn-report btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')">📄</button>`;
-    }
-  }
-  if (role === 'it' || role === 'reception') {
-    if (e.status === 'dept_review') {
-      const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
-      primaryBtn = myPending.length > 0 ?
-        `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">📦 Allocate</button>` :
-        `<span class="badge ${role === 'it' ? 'badge-it' : 'badge-reception'}">✔ Allocated</span>`;
-    }
-    primaryBtn += `<button class="btn btn-report btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')">📄</button>`;
-  }
-
-  // IT/Reception: show only name, date, time + their items (no budget/details)
-  const isDepRole = (role === 'it' || role === 'reception');
-  const myItems = isDepRole ? e.requested_items.filter(i => i.dept === role) : [];
-
-  // Determine school tag
-  let schoolTag = '';
-  if (e.departments && e.departments.length > 0) {
-    const s = e.departments[0].school.toUpperCase();
-    let cls = 'sb-gen';
-    if (s.includes('BCA')) cls = 'sb-bca';
-    else if (s.includes('B.COM') || s.includes('BCOM')) cls = 'sb-bcom';
-    else if (s.includes('BSC')) cls = 'sb-bsc';
-    else if (s.includes('BA')) cls = 'sb-ba';
-    else if (s.includes('BBA')) cls = 'sb-bba';
-    schoolTag = `<div class="school-badge ${cls}">${s}</div>`;
-  }
-
-  return `<div class="event-card status-${e.status}" onclick="viewEventDetail('${e.id}')" style="cursor:pointer">
-    <div class="event-card-header">
-      <div style="flex:1">
-        ${schoolTag}
-        <div class="event-title">${e.title}</div>
-      </div>
-      ${statusBadge}
-    </div>
-    ${renderMiniStepper(e.status)}
-    <div class="event-meta" style="margin-top:10px">
-      <span class="event-meta-item">📅 ${e.date}</span>
-      <span class="event-meta-item">⏰ ${e.time_slot}</span>
-      ${!isDepRole ? `<span class="event-meta-item">🏛️ ${e.hall_name}</span>` : ''}
-      ${(!isDepRole && e.budget_id) ? `<span class="event-meta-item">🔖 ${e.budget_id}</span>` : ''}
-    </div>
-    ${isDepRole && myItems.length > 0 ? `
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
-      ${myItems.map(i => `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;color:var(--text2)">
-        <span>${i.item_name}</span><span style="font-weight:700;color:var(--accent)">× ${i.requested_qty}</span>
-      </div>`).join('')}
-    </div>` : ''}
-    ${(!isDepRole && e.created_by_name) ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:6px">👤 ${e.created_by_name}</div>` : ''}
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <span style="font-size:0.74rem;color:var(--muted)">Click for full details</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${primaryBtn}</div>
-    </div>
-  </div>`;
-}
 
 // ─── VIEW EVENT DETAIL ────────────────────────────────────────────────────────
 async function viewEventDetail(eid) {
@@ -1631,6 +1965,16 @@ async function submitAllocation(eid, dept) {
 }
 
 // ─── PRINCIPAL MODAL ──────────────────────────────────────────────────────────
+async function rejectClubItems(eid, role) {
+  showConfirmModal('Deny Club Request', `Deny all ${role === 'pixesclub' ? 'Pixes Club' : 'Fine Arts Club'} items for this event?`, async () => {
+    const e = await api('/api/events/' + eid);
+    const items = e.requested_items.filter(i => i.dept === role).map(i => ({ item_id: i.item_id, allocated_qty: 0 }));
+    await api(`/api/events/${eid}/dept-review`, 'POST', { items, reject: true });
+    showToast('Club items denied ✓', 'success');
+    renderClubRequests(role);
+  });
+}
+
 async function openPrincipalModal(eid) {
   const e = await api('/api/events/' + eid);
   const itItems = e.requested_items.filter(i => i.dept === 'it');
@@ -1785,6 +2129,7 @@ function getUpcomingEventsHtml(allEvents) {
       <div class="upcoming-scroll-container">
         <!-- Total Summary Card -->
         <div class="upcoming-card-box upcoming-total-card grad-midnight">
+          <div class="total-badge-glow"></div>
           <div class="total-val">${allEvents.filter(e => e.status === 'approved').length}</div>
           <div class="total-lbl">Approved Events Total</div>
         </div>
@@ -1795,18 +2140,21 @@ function getUpcomingEventsHtml(allEvents) {
             const gradClass = grads[idx % grads.length];
             
             return `
-            <div class="upcoming-card-box ${gradClass}">
+            <div class="upcoming-card-box card-vibrant ${gradClass}">
+              <div class="card-glass-effect"></div>
               <div class="upcoming-card-top">
-                <div class="upcoming-card-title" style="color:#fff; font-weight:800; font-size:1.1rem">${e.title}</div>
-                <div class="upcoming-card-status">${e.status === 'approved' ? '✅' : '⏳'}</div>
+                <div class="upcoming-card-title">${e.title}</div>
+                <div class="upcoming-card-status-pill ${e.status === 'approved' ? 'pill-approved' : 'pill-pending'}">
+                  ${e.status === 'approved' ? '✅ Scheduled' : '⏳ Pending'}
+                </div>
               </div>
-              <div class="upcoming-card-meta" style="color:rgba(255,255,255,0.8); font-size:0.85rem">
-                <div class="meta-line">📅 ${e.date}</div>
-                <div class="meta-line">⌚ ${e.time_slot}</div>
-                <div class="meta-line">🏛️ ${e.hall_name}</div>
+              <div class="upcoming-card-meta">
+                <div class="meta-line"><span>📅</span> ${e.date}</div>
+                <div class="meta-line"><span>⏰</span> ${e.time_slot}</div>
+                <div class="meta-line"><span>🏛️</span> ${e.hall_name}</div>
               </div>
-              <div class="upcoming-card-footer" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:12px; margin-top:12px">
-                <div class="organizer-name" style="color:rgba(255,255,255,0.9); font-weight:600">By ${e.created_by_name}</div>
+              <div class="upcoming-card-footer">
+                <div class="organizer-name">By ${e.created_by_name}</div>
                 ${isMyPending ? `<button class="btn btn-gold btn-xs" onclick="event.stopPropagation();openEditEventModal('${e.id}')">✏️ Edit</button>` : ''}
               </div>
             </div>
@@ -2228,8 +2576,29 @@ async function api(url, method = 'GET', body = null) {
 function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 function openModal() { document.getElementById('modalOverlay').classList.add('show'); document.getElementById('mainModal').classList.add('show'); }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); document.getElementById('mainModal').classList.remove('show'); }
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const mw = document.querySelector('.main-wrap');
+  const btn = document.getElementById('menuToggleBtn');
+  
+  if (window.innerWidth > 1024) {
+    // Desktop: collapse/expand
+    const isCollapsed = sb.classList.toggle('collapsed');
+    if (mw) mw.classList.toggle('expanded', isCollapsed);
+    if (btn) btn.innerHTML = isCollapsed ? '☰' : '✕';
+  } else {
+    // Mobile: slide-in/out
+    const isOpen = sb.classList.toggle('open');
+    if (btn) btn.innerHTML = isOpen ? '✕' : '☰';
+  }
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  const ov = document.getElementById('sidebarOverlay');
+  if (ov) ov.classList.remove('show');
+  const btn = document.getElementById('menuToggleBtn');
+  if (btn) { btn.innerHTML = '☰'; btn.title = 'Open menu'; }
+}
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
   const icons = { success: '✅', error: '❌', info: 'ℹ️' };
@@ -2294,11 +2663,11 @@ function applyEventFilter(gridId, role, query, statusFilter) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
   const sortVal = document.getElementById('sort_' + gridId)?.value || 'date-asc';
-  const cards = Array.from(grid.querySelectorAll('.event-card'));
+  const cards = Array.from(grid.querySelectorAll('.event-card, .event-manage-card'));
   let visible = 0;
   cards.forEach(card => {
-    const title = (card.querySelector('.event-title')?.textContent || '').toLowerCase();
-    const meta = (card.querySelector('.event-meta')?.textContent || '').toLowerCase();
+    const title = (card.querySelector('.event-title, .em-title')?.textContent || '').toLowerCase();
+    const meta = (card.querySelector('.event-meta, .em-meta')?.textContent || '').toLowerCase();
     const status = card.className.match(/status-(\S+)/)?.[1] || '';
     const matchQ = !query || title.includes(query) || meta.includes(query);
     const matchS = statusFilter === 'all' || status === statusFilter;
@@ -2308,10 +2677,10 @@ function applyEventFilter(gridId, role, query, statusFilter) {
   // Sort visible cards
   const visibleCards = cards.filter(c => c.style.display !== 'none');
   visibleCards.sort((a, b) => {
-    const da = a.querySelector('.event-meta-item')?.textContent?.trim() || '';
-    const db = b.querySelector('.event-meta-item')?.textContent?.trim() || '';
-    const ta = a.querySelector('.event-title')?.textContent || '';
-    const tb = b.querySelector('.event-title')?.textContent || '';
+    const da = a.querySelector('.event-meta-item, .em-meta-item')?.textContent?.trim() || '';
+    const db = b.querySelector('.event-meta-item, .em-meta-item')?.textContent?.trim() || '';
+    const ta = a.querySelector('.event-title, .em-title')?.textContent || '';
+    const tb = b.querySelector('.event-title, .em-title')?.textContent || '';
     if (sortVal === 'date-asc') return da.localeCompare(db);
     if (sortVal === 'date-desc') return db.localeCompare(da);
     if (sortVal === 'title') return ta.localeCompare(tb);

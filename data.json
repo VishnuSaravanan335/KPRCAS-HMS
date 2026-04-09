@@ -65,7 +65,7 @@
       "username": "it",
       "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
       "role": "it",
-      "email": "edwfgtrhyjk,"
+      "email": ""
     },
     {
       "id": "u4",
@@ -191,7 +191,7 @@
     {
       "id": "h_lab9",
       "name": "Lab 9",
-      "capacity": 50,
+      "capacity": 40,
       "type": "Lab",
       "building": "Lab-Block",
       "floor": "1st Floor",
@@ -211,8 +211,8 @@
     {
       "id": "h_sem2",
       "name": "Seminar Hall 2",
-      "capacity": 200,
-      "type": "Seminar",
+      "capacity": 250,
+      "type": "Seminar Hall",
       "building": "Main-Block",
       "floor": "Ground Floor",
       "locked": false,
@@ -272,7 +272,7 @@
       "name": "Laptop",
       "dept": "it",
       "stock_qty": 20,
-      "in_use": 13
+      "in_use": 8
     },
     {
       "id": "it05",
@@ -356,7 +356,7 @@
       "name": "Plug Card",
       "dept": "reception",
       "stock_qty": 15,
-      "in_use": 0
+      "in_use": 10
     },
     {
       "id": "rc07",
@@ -405,7 +405,7 @@
       "name": "Registration Chair",
       "dept": "reception",
       "stock_qty": 20,
-      "in_use": 0
+      "in_use": 10
     },
     {
       "id": "rc14",
@@ -539,9 +539,10 @@
           "item_name": "Registration Chair",
           "dept": "reception",
           "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
         }
       ],
       "created_by": "u2",
@@ -773,67 +774,6 @@
       "created_by": "u2",
       "created_by_name": "Dr. Priya",
       "created_at": "2026-03-24T10:24:44.362460",
-      "principal_decision": null,
-      "principal_note": ""
-    },
-    {
-      "id": "eff5af76c",
-      "title": "TECH_blast",
-      "event_type": "Seminar",
-      "date": "2026-03-25",
-      "days": 1,
-      "time_slot": "9:00 AM - 12:00 PM",
-      "hall_id": "h_oat",
-      "hall_name": "Open Air Theatre (OAT)",
-      "description": "fcvgbn",
-      "budget_id": "789",
-      "coordinator": "Vishnu",
-      "coordinator_phone": "1234569870",
-      "expected_count": 300,
-      "departments": [
-        {
-          "school": "School of Commerce",
-          "department": "B.Com. Banking and Insurance (B&I)"
-        }
-      ],
-      "has_intro_video": true,
-      "has_dance": true,
-      "has_photos": false,
-      "has_video": false,
-      "requested_items": [
-        {
-          "item_id": "it04",
-          "item_name": "Laptop",
-          "dept": "it",
-          "requested_qty": 5,
-          "allocated_qty": 5,
-          "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "it05",
-          "item_name": "Projector",
-          "dept": "it",
-          "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
-        },
-        {
-          "item_id": "rc03",
-          "item_name": "Tray",
-          "dept": "reception",
-          "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
-        }
-      ],
-      "created_by": "u2",
-      "created_by_name": "Dr. Priya",
-      "created_at": "2026-03-24T10:24:44.792100",
       "principal_decision": null,
       "principal_note": ""
     },
@@ -1605,9 +1545,10 @@
           "item_name": "Plug Card",
           "dept": "reception",
           "requested_qty": 10,
-          "allocated_qty": 0,
-          "dept_approved": false,
-          "returned": false
+          "allocated_qty": 10,
+          "dept_approved": true,
+          "returned": false,
+          "dept_rejected": false
         }
       ],
       "created_by": "u2",
