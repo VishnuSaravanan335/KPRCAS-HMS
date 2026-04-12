@@ -878,6 +878,8 @@ def update_inventory(iid: str) -> RouteResp:
         item['stock_qty'] = int(d['stock_qty'])
     if 'name' in d:
         item['name'] = d['name']
+    if 'locked' in d:
+        item['locked'] = bool(d['locked'])
     save_data(data)
     return jsonify(item)
 
@@ -1050,7 +1052,8 @@ def create_event() -> RouteResp:
     event['status'] = compute_event_status(event)
     
     # Trigger Email Notification
-    mail_ok, mail_msg = send_event_notification(event)
+    # mail_ok, mail_msg = send_event_notification(event)
+    mail_ok, mail_msg = True, "Email notification disabled by request."
     
     resp = {
         **event,
@@ -1259,28 +1262,65 @@ def principal_review(eid: str) -> RouteResp:
 @app.route('/api/events/<eid>/return', methods=['POST'])
 @roles_required('it', 'reception', 'pixesclub', 'fineartsclub')
 def return_items(eid: str) -> RouteResp:
-    """Mark ALL items for this department as returned (one-click bulk return)."""
+    """Handle both Bulk Return All and Partial/Custom Returns."""
     role: str = str(session['role'])
+    d: JsonDict = get_request_json()
+    returns_list = d.get('returns')  # List of {item_id, qty}
+    
     data = load_data()
     event: Optional[JsonDict] = next((e for e in data['events'] if e['id'] == eid), None)
     if not event:
         return jsonify({"error": "Not found"}), 404
 
     requested_items = event.get('requested_items')
-    if isinstance(requested_items, list):
-        for ri_raw in requested_items:
-            ri: dict = cast(dict, ri_raw)
-            if ri.get('dept') == role and ri.get('dept_approved') and not ri.get('returned'):
-                inv_raw = next(
-                    (i for i in cast(list, data.get('inventory', [])) if i.get('id') == ri.get('item_id')), None
-                )
-                if inv_raw:
-                    inv: dict = cast(dict, inv_raw)
-                    rem = int(ri.get('allocated_qty', 0)) - int(ri.get('returned_qty', 0))
-                    if rem > 0:
-                        inv['in_use'] = max(0, int(inv.get('in_use', 0)) - rem)
-                ri['returned_qty'] = ri.get('allocated_qty', 0)
+    if not isinstance(requested_items, list):
+        return jsonify({"ok": True})
+
+    inventory = cast(list, data.get('inventory', []))
+    
+    # CASE 1: Partial/Custom Return Processing
+    if isinstance(returns_list, list):
+        for r in returns_list:
+            item_id = r.get('item_id')
+            qty_returning = int(r.get('qty', 0))
+            if qty_returning <= 0: continue
+            
+            # Find item in event
+            ri = next((i for i in requested_items if i.get('item_id') == item_id and i.get('dept') == role), None)
+            if not ri: continue
+            
+            # Calculate actual return logic
+            allocated = int(ri.get('allocated_qty', 0))
+            already_returned = int(ri.get('returned_qty', 0))
+            rem_to_return = allocated - already_returned
+            
+            actual_qty = min(qty_returning, rem_to_return)
+            if actual_qty <= 0: continue
+            
+            # Update event record
+            ri['returned_qty'] = already_returned + actual_qty
+            if ri['returned_qty'] >= allocated:
                 ri['returned'] = True
+            
+            # Update central inventory
+            inv = next((i for i in inventory if i.get('id') == item_id), None)
+            if inv:
+                inv['in_use'] = max(0, int(inv.get('in_use', 0)) - actual_qty)
+
+    # CASE 2: Bulk Return All (One-click)
+    else:
+        for ri in requested_items:
+            if ri.get('dept') == role and ri.get('dept_approved') and not ri.get('returned'):
+                allocated = int(ri.get('allocated_qty', 0))
+                already_returned = int(ri.get('returned_qty', 0))
+                remaining = allocated - already_returned
+                
+                if remaining > 0:
+                    inv = next((i for i in inventory if i.get('id') == ri.get('item_id')), None)
+                    if inv:
+                        inv['in_use'] = max(0, int(inv.get('in_use', 0)) - remaining)
+                    ri['returned_qty'] = allocated
+                    ri['returned'] = True
 
     save_data(data)
     return jsonify({"ok": True})

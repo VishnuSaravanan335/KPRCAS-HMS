@@ -15,35 +15,32 @@
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">
-        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="KPRCAS" />
+      <div class="logo-icon-wrap">
+        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="KPRCAS">
       </div>
-      <div class="logo-icon-2">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/KPR_College_of_Arts_%26_Science_%26_Research_logo.png/200px-KPR_College_of_Arts_%26_Science_%26_Research_logo.png" alt="HMS" onerror="this.style.display='none';this.parentElement.innerHTML='🏛️';" />
-      </div>
-      <div>
-        <div class="logo-text">KPRCAS<span>HMS</span></div>
-        <div class="logo-text-sub">Hall Management</div>
+      <div class="brand-stack">
+        <span class="brand-kprcas">KPRCAS</span>
+        <span class="brand-hms">HMS</span>
       </div>
     </div>
     <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-footer">
       <div class="user-info" id="userInfo"></div>
-      <button class="btn-logout" onclick="logout()">↩ Sign Out</button>
+      <button class="btn-logout" onclick="logout()">↩ <span>Sign Out</span></button>
     </div>
   </aside>
 
   <div class="main-wrap">
     <header class="topbar">
-      <button class="menu-toggle" id="menuToggleBtn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
-      <div class="topbar-center">
-        <div class="topbar-title" id="topbarTitle">Dashboard</div>
-        <div class="topbar-subtitle" id="topbarSubtitle">KPRCAS HMS &bull; Hall Management System</div>
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggleBtn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+        <div class="topbar-page-label" id="topbarTitle">Dashboard</div>
       </div>
+
       <div class="topbar-right-group">
-        <div class="topbar-date" id="topbarDate"></div>
-        <div class="topbar-role-badge" id="topbarRoleBadge" style="display:none"></div>
-        <div class="lock-badge" id="lockBadge" style="display:none">🔒 Portal Locked</div>
+        <div class="topbar-date-pill" id="topbarDate"></div>
+        <div class="topbar-role-badge-pill" id="topbarRoleBadge">ADMIN</div>
+        <div class="lock-badge-pill" id="lockBadge" style="display:none">🔒 Locked</div>
       </div>
     </header>
 
@@ -58,13 +55,14 @@
     <main class="page-content" id="pageContent"></main>
   </div>
 
-  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
-  <div class="modal" id="mainModal">
-    <div class="modal-header">
-      <h3 id="modalTitle">Modal</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal" id="mainModal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modalTitle">Modal</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
     </div>
-    <div class="modal-body" id="modalBody"></div>
   </div>
 
   <div class="toast" id="toast"></div>
