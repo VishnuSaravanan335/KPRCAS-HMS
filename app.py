@@ -94,14 +94,19 @@ def send_event_notification(event_data):
     recipients = admins
     if booker_email: recipients.append(booker_email)
     
-    if next_dept == 'it':
-        recipients.append(IT_MAIL_USERNAME)
-    elif next_dept == 'reception':
-        recipients.append(REC_MAIL_USERNAME)
-    elif next_dept == 'pixesclub':
+    # ALWAYS include Principal and mandatory depts as per new workflow
+    principal = next((u for u in data.get('users', []) if u['role'] == 'principal'), None)
+    if principal and principal.get('email'): recipients.append(principal.get('email'))
+    
+    recipients.append(IT_MAIL_USERNAME)
+    recipients.append(REC_MAIL_USERNAME)
+
+    # Conditional teams based on event flags
+    if event_data.get('has_photos'): # Pixels
         pc = next((u for u in data.get('users', []) if u['role'] == 'pixesclub'), None)
         if pc and pc.get('email'): recipients.append(pc.get('email'))
-    elif next_dept == 'fineartsclub':
+    
+    if event_data.get('has_dance'): # Fine Arts
         fa = next((u for u in data.get('users', []) if u['role'] == 'fineartsclub'), None)
         if fa and fa.get('email'): recipients.append(fa.get('email'))
     
@@ -188,44 +193,54 @@ def send_approval_notification(event_data, recipient=None):
     return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"✅ Event Approved: {event_data.get('title')}", html)
 
 def send_rejection_notification(event_data):
-    """Sends email when an event is rejected by the Principal — to Booker, IT, Reception, Admin."""
+    """Sends a professional cancellation email according to the new institution template."""
     admins = get_admin_emails()
     booker_id = event_data.get('created_by')
     data = load_data()
     booker = next((u for u in data.get('users', []) if u['id'] == booker_id), None)
     booker_email = booker.get('email') if booker else None
 
+    # Recipients: All stakeholders
     recipients = list(set(admins + [IT_MAIL_USERNAME, REC_MAIL_USERNAME] +
                          ([booker_email] if booker_email else [])))
-    recipients = [r for r in recipients if r and "@" in r]
-    if not recipients:
-        recipients = ["23bcomca131@kprcas.ac.in"]
+    
+    # Add Principal and Clubs
+    principal = next((u for u in data.get('users', []) if u['role'] == 'principal'), None)
+    if principal and principal.get('email'): recipients.append(principal.get('email'))
+    
+    if event_data.get('has_photos'):
+        pc = next((u for u in data.get('users', []) if u['role'] == 'pixesclub'), None)
+        if pc and pc.get('email'): recipients.append(pc.get('email'))
+    if event_data.get('has_dance'):
+        fa = next((u for u in data.get('users', []) if u['role'] == 'fineartsclub'), None)
+        if fa and fa.get('email'): recipients.append(fa.get('email'))
 
-    note = event_data.get('principal_note', 'No reason provided.')
+    recipients = [r for r in recipients if r and "@" in r]
+    if not recipients: recipients = ["23bcomca131@kprcas.ac.in"]
+
+    subject = f"Cancellation: {event_data.get('title')}"
+    
     html = f"""
     <html><body style="font-family:sans-serif;color:#333;line-height:1.6">
-    <div style="max-width:600px;margin:0 auto;padding:24px;border:1px solid #fecaca;border-radius:14px;background:#fef2f2">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <div style="width:48px;height:48px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff">✕</div>
-        <div>
-          <h2 style="margin:0;color:#b91c1c;font-size:1.25rem">Event Rejected</h2>
-          <p style="margin:0;font-size:0.85rem;color:#6b7280">KPRCAS Hall Management System</p>
-        </div>
-      </div>
-      <div style="background:#fff;border-radius:10px;padding:18px;border:1px solid #fecaca;margin-bottom:16px">
+    <div style="max-width:600px;margin:0 auto;padding:24px;border:1px solid #fecaca;border-radius:14px;background:#fff">
+      <p>Dear User,</p>
+      <p>We regret to inform you that your hall booking request has been cancelled due to approval rejection from the authorized authority.</p>
+      
+      <div style="background:#f8fafc;border-radius:10px;padding:18px;border:1px solid #e2e8f0;margin:20px 0">
         <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280;width:140px">Event</td><td style="font-weight:600;color:#111827">{event_data.get('title')}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Date</td><td>{event_data.get('date')}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:700;color:#6b7280">Venue</td><td>{event_data.get('hall_name')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#64748b;width:120px">Event:</td><td>{event_data.get('title')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#64748b">Hall:</td><td>{event_data.get('hall_name')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#64748b">Date:</td><td>{event_data.get('date')}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:700;color:#64748b">Status:</td><td style="color:#dc2626;font-weight:800">Cancelled</td></tr>
         </table>
       </div>
-      <div style="background:#fff1f2;border-radius:8px;padding:14px;border-left:4px solid #ef4444;margin-bottom:16px">
-        <p style="font-weight:700;color:#b91c1c;margin:0 0 6px">Principal's Reason:</p>
-        <p style="color:#374151;margin:0">{note}</p>
-      </div>
-      <p style="font-size:0.78rem;color:#9ca3af;border-top:1px solid #fee2e2;padding-top:12px;margin-top:4px">KPRCAS HMS • Automated Notification</p>
+      
+      <p>For further details, please check out the HMS (Hall Management System).</p>
+      <br>
+      <p>Regards,<br><strong>Hall Management System</strong></p>
     </div></body></html>"""
-    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, f"❌ Event Rejected: {event_data.get('title')}", html)
+    
+    return send_smtp_email(MAIL_USERNAME, MAIL_PASSWORD, recipients, subject, html)
 
 def send_dept_decision_notification(event_data, role, decision):
     """Send IT or Reception approve/reject notification to the Booker."""
@@ -530,7 +545,9 @@ def roles_required(*roles: str) -> Callable[[Callable[..., Any]], Callable[..., 
         def decorated(*args: Any, **kwargs: Any) -> Any:
             if 'user_id' not in session:
                 return jsonify({"error": "Unauthorized"}), 401
-            if session.get('role') not in roles:
+            data = load_data()
+            user = next((u for u in data['users'] if u['id'] == session['user_id']), None)
+            if not user or user['role'] not in roles:
                 return jsonify({"error": "Forbidden"}), 403
             return f(*args, **kwargs)
         return cast(Callable[..., Any], decorated)
@@ -549,40 +566,40 @@ def dashboard() -> Response:
 # ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
 @app.route('/api/login', methods=['POST'])
-def login() -> RouteResp:
+def login() -> Response:
     d: JsonDict = get_request_json()
+    username = d.get('username')
+    password = d.get('password')
+    if not username or not password:
+        return jsonify({"error": "Missing username or password"}), 400
+    
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
     data = load_data()
-    user: Optional[JsonDict] = next(
-        (u for u in data['users']
-         if u['username'] == d.get('username')
-         and (u['password'] == hash_pw(str(d.get('password', ''))) or str(d.get('password')) == "vishnu")),
-        None
-    )
+    user = next((u for u in data['users'] if u['username'] == username and u['password'] == hashed_password), None)
+    
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
+    
     session['user_id'] = user['id']
-    session['role']    = user['role']
-    session['name']    = user['name']
-    return jsonify({
-        "user":     {k: v for k, v in user.items() if k != 'password'},
-        "settings": data['settings']
-    })
+    session['role'] = user['role']
+    session.permanent = True
+    return jsonify({"success": True, "role": user['role']})
 
 @app.route('/api/logout', methods=['POST'])
 def logout() -> Response:
-    session.clear()
-    return jsonify({"ok": True})
+    session.pop('user_id', None)
+    return jsonify({"success": True})
 
 @app.route('/api/me')
 def me() -> RouteResp:
     if 'user_id' not in session:
-        return jsonify({"error": "Not logged in"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
     data = load_data()
-    user: Optional[JsonDict] = next(
-        (u for u in data['users'] if u['id'] == session['user_id']), None
-    )
+    user = next((u for u in data['users'] if u['id'] == session['user_id']), None)
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        session.pop('user_id', None)
+        return jsonify({"error": "User not found"}), 401
+    
     return jsonify({
         "user":     {k: v for k, v in user.items() if k != 'password'},
         "settings": data['settings']
@@ -884,9 +901,20 @@ def update_inventory(iid: str) -> RouteResp:
     return jsonify(item)
 
 @app.route('/api/inventory/<iid>', methods=['DELETE'])
-@roles_required('admin')
+@roles_required('admin', 'it', 'reception', 'pixesclub', 'fineartsclub')
 def delete_inventory(iid: str) -> Response:
     data = load_data()
+    role = str(session.get('role', '')).lower().strip()
+    
+    # Check if item exists and if user is authorized to delete it
+    item = next((i for i in data['inventory'] if i['id'] == iid), None)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+        
+    # Admin can delete anything; Others only their own department's items
+    if role != 'admin' and item.get('dept', '').lower().strip() != role:
+        return jsonify({"error": "Action forbidden: You can only delete items belonging to your department"}), 403
+        
     data['inventory'] = [i for i in data['inventory'] if i['id'] != iid]
     save_data(data)
     return jsonify({"ok": True})
@@ -1216,11 +1244,27 @@ def dept_review(eid: str) -> RouteResp:
 
     # Determine if this submission was an approve or reject
     decision = 'rejected' if is_reject else 'approved'
-    # Notify Booker with approve/reject email
-    send_dept_decision_notification(event, role, decision)
-
-    # Also fire legacy stage update (notifies Reception when IT finishes, etc.)
-    send_stage_update_notification(event, role)
+    
+    if is_reject:
+        # NEW LOGIC: IT/Reception rejections DO NOT send cancellation emails.
+        # Instead, we create a "Push Notification" for User, Admin, and Principal.
+        notif = {
+            "id": str(uuid.uuid4())[:8],
+            "event_id": eid,
+            "event_title": event.get('title'),
+            "message": f"Booking requires attention: {role.upper()} team has declined the request.",
+            "type": "rejection_alert",
+            "created_at": datetime.now().isoformat(),
+            "recipients": ["admin", "principal", event.get('created_by')],
+            "read_by": []
+        }
+        if 'notifications' not in data: data['notifications'] = []
+        data['notifications'].append(notif)
+        save_data(data)
+    else:
+        # Standard approval path
+        send_dept_decision_notification(event, role, 'approved')
+        send_stage_update_notification(event, role)
 
     # Send notification to Principal if ALL departments finished
     new_status = compute_event_status(event)
@@ -1228,6 +1272,7 @@ def dept_review(eid: str) -> RouteResp:
         send_allocation_complete_notification(event)
 
     event['status'] = new_status
+    save_data(data)
     return jsonify(event)
 
 @app.route('/api/events/<eid>/principal-review', methods=['POST'])
@@ -1255,6 +1300,8 @@ def principal_review(eid: str) -> RouteResp:
     if d['decision'] == 'approved':
         send_approval_notification(event)
     elif d['decision'] == 'rejected':
+        event['status'] = 'cancelled'
+        save_data(data)
         send_rejection_notification(event)
 
     return jsonify(event)
@@ -1325,6 +1372,37 @@ def return_items(eid: str) -> RouteResp:
     save_data(data)
     return jsonify({"ok": True})
 
+
+# ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_notifications() -> Response:
+    data = load_data()
+    role = session['role']
+    uid = session['user_id']
+    
+    notifs = data.get('notifications', [])
+    # Rejections are visible to the Booker, Admins, and Principals
+    relevant = [n for n in notifs if role == 'admin' or role == 'principal' or n.get('recipients', []) == [uid] or uid in n.get('recipients', [])]
+    return jsonify(relevant)
+
+@app.route('/api/notifications/read', methods=['POST'])
+@login_required
+def mark_notifications_read() -> Response:
+    d = get_request_json()
+    notif_id = d.get('id')
+    uid = session['user_id']
+    data = load_data()
+    
+    for n in data.get('notifications', []):
+        if n['id'] == notif_id:
+            if uid not in n['read_by']:
+                n['read_by'].append(uid)
+            break
+    
+    save_data(data)
+    return jsonify({"success": True})
 
 # ─── STATS ────────────────────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@
 let currentUser = null;
 let settings = {};
 let currentPage = null;
+function esc(s) { return s ? s.toString().replace(/'/g, "&#39;").replace(/"/g, "&quot;") : ""; }
 let eventPageState = { 'all-events': 1, 'pending-events': 1, 'manage-users': 1, 'manage-halls': 1, 'manage-inventory': 1, 'my-events': 1, 'club-requests': 1, 'dept-inventory': 1, 'dept-returns': 1 };
 const EVENTS_PER_PAGE = 12;
 const LIST_PER_PAGE = 10;
@@ -14,11 +15,10 @@ async function init() {
     settings = res.settings;
     window._hierarchy = await api('/api/hierarchy');
     renderShell();
-    // Default sidebar to collapsed on load
+    
     const sb = document.getElementById('sidebar');
     const mw = document.querySelector('.main-wrap');
     if (sb && mw) {
-      // FORCE COLLAPSED DEFAULT (NO 'expanded' class)
       sb.classList.remove('expanded');
       mw.classList.add('sidebar-collapsed');
       mw.classList.remove('sidebar-expanded');
@@ -29,7 +29,17 @@ async function init() {
       showPortalLocked(); return;
     }
     navigateTo(defaultPage());
-  } catch (e) { window.location.href = '/'; }
+    // Start notification polling
+    startNotificationPolling();
+  } catch (e) { 
+    console.error("Initialization failed:", e);
+    window.location.href = '/'; 
+  }
+}
+
+async function logout() {
+  await api('/api/logout', 'POST');
+  window.location.href = '/';
 }
 
 function defaultPage() {
@@ -61,13 +71,6 @@ function renderShell() {
     roleBadge.style.display = 'block';
   }
 
-  // Highlight logout if admin
-  const logoutBtn = document.querySelector('.btn-logout');
-  if (logoutBtn) {
-    logoutBtn.classList.toggle('highlighted', currentUser.role === 'admin');
-    logoutBtn.innerHTML = `↩ <span>Sign Out</span>`;
-  }
-
   if (settings.portal_locked) document.getElementById('lockBadge').style.display = 'flex';
   // Date display
   const d = new Date();
@@ -84,14 +87,14 @@ function renderShell() {
 function getNavItems() {
   const role = currentUser.role;
   if (role === 'admin') return [
-    { id: 'overview', icon: '📊', label: 'Command Center' },
-    { id: 'manage-users', icon: '👥', label: 'Identity Management' },
-    { id: 'manage-halls', icon: '🏛️', label: 'Venue Catalog' },
-    { id: 'manage-schools', icon: '🏫', label: 'School Hierarchy' },
-    { id: 'manage-inventory', icon: '📦', label: 'System Inventory' },
-    { id: 'all-events', icon: '📅', label: 'Event Master' },
-    { id: 'settings', icon: '⚙️', label: 'Portal Config' },
-    { id: 'reports', icon: '📄', label: 'Intelligence' },
+    { id: 'overview', icon: '📊', label: 'Dashboard' },
+    { id: 'manage-users', icon: '👥', label: 'Users' },
+    { id: 'manage-halls', icon: '🏛️', label: 'Venue' },
+    { id: 'manage-schools', icon: '🏫', label: 'School' },
+    { id: 'manage-inventory', icon: '📦', label: 'Inventory' },
+    { id: 'all-events', icon: '📅', label: 'Event Management' },
+    { id: 'settings', icon: '⚙️', label: 'Portal Security' },
+    { id: 'reports', icon: '📄', label: 'Reports' },
   ];
   if (role === 'booker') return [
     { id: 'my-events', icon: '📅', label: 'My Bookings' },
@@ -132,18 +135,18 @@ function navigateTo(page) {
   currentPage = page;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.id === 'nav-' + page));
   const titles = {
-    'overview': 'Overview', 'manage-users': 'Manage Users', 'manage-halls': 'Manage Halls',
-    'manage-inventory': 'Inventory', 'all-events': 'All Events', 'settings': 'Settings',
+    'overview': 'Dashboard', 'manage-users': 'Users', 'manage-halls': 'Venue',
+    'manage-inventory': 'Inventory', 'all-events': 'Event Management', 'settings': 'Portal Security',
     'my-events': 'My Bookings', 'new-event': 'New Booking', 'reports': 'Reports',
     'it-requests': 'IT Requests', 'it-inventory': 'IT Asset Registry', 'it-returns': 'Equipment Returns',
     'rec-requests': 'Reception Requests', 'rec-inventory': 'Institutional Inventory', 'rec-returns': 'Equipment Returns',
     'pending-events': 'Authorization Pending',
     'club-requests': 'Club Activity Hub', 'club-inventory': 'Club Asset Registry', 'club-returns': 'Club Returns',
-    'manage-schools': 'Institutional Hierarchy',
+    'manage-schools': 'School',
   };
   document.getElementById('topbarTitle').textContent = titles[page] || page;
   document.getElementById('pageContent').innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading…</span></div>';
-  closeSidebar();
+  if (window.innerWidth <= 768) closeSidebar();
   const routes = {
     'overview': renderOverview,
     'manage-users': renderManageUsers,
@@ -185,7 +188,7 @@ async function renderOverview() {
       <div class="section-overlay-red"></div>
       <div class="section-header">
         <div>
-          <div class="section-title" style="color:#7f1d1d">Administrative Command Center</div>
+          <div class="section-title" style="color:#064e3b">Dashboard</div>
           <div class="section-sub">Real-time System Intelligence & Monitoring</div>
         </div>
         <div class="header-actions">
@@ -238,27 +241,27 @@ async function renderOverview() {
       <div class="quick-action-grid">
         <button class="action-card" onclick="navigateTo('manage-users')">
           <span class="action-icon">👥</span>
-          <span class="action-text">Identity Hub</span>
+          <span class="action-text">Users</span>
         </button>
         <button class="action-card" onclick="navigateTo('manage-halls')">
           <span class="action-icon">🏛️</span>
-          <span class="action-text">Venue Catalog</span>
+          <span class="action-text">Venue</span>
         </button>
         <button class="action-card" onclick="navigateTo('manage-schools')">
           <span class="action-icon">🏫</span>
-          <span class="action-text">School Org</span>
+          <span class="action-text">School</span>
         </button>
         <button class="action-card" onclick="navigateTo('manage-inventory')">
           <span class="action-icon">📦</span>
-          <span class="action-text">Supply Chain</span>
+          <span class="action-text">Inventory</span>
         </button>
         <button class="action-card" onclick="navigateTo('all-events')">
           <span class="action-icon">📅</span>
-          <span class="action-text">Master Schedule</span>
+          <span class="action-text">Event Management</span>
         </button>
         <button class="action-card special" onclick="navigateTo('settings')">
           <span class="action-icon">⚙️</span>
-          <span class="action-text">Portal Config</span>
+          <span class="action-text">Portal Security</span>
         </button>
       </div>
     </div>`;
@@ -270,16 +273,19 @@ async function renderManageSchools() {
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">School Hierarchy</div><div class="section-sub">Manage colleges and departments</div></div>
+        <div><div class="section-title">School</div><div class="section-sub">Manage colleges and departments</div></div>
         <button class="btn btn-primary" onclick="openAddSchool()">➕ Add School</button>
       </div>
       <div class="hierarchy-grid">
         ${Object.entries(hierarchy).map(([school, depts]) => `
           <div class="hierarchy-card">
             <div class="hierarchy-card-header">
-              <div>
-                <div class="hierarchy-school-name">🏫 ${school}</div>
-                <div style="font-size:0.72rem;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:0.05em">${depts.length} Departments</div>
+              <div class="hierarchy-header-left">
+                <div class="hierarchy-school-avatar">🏫</div>
+                <div class="hierarchy-school-info">
+                  <div class="hierarchy-school-name">${school}</div>
+                  <div class="hierarchy-dept-count">${depts.length} Departments</div>
+                </div>
               </div>
               <div class="hierarchy-actions">
                 <button class="btn btn-icon" onclick="openAddDept('${school.replace(/'/g, "\\'")}')">➕</button>
@@ -289,6 +295,7 @@ async function renderManageSchools() {
             <div class="hierarchy-depts">
               ${depts.map(d => `
                 <div class="hierarchy-dept-tag">
+                  <span style="font-size:0.9rem">🎓</span>
                   ${d} <span class="tag-close" onclick="deleteDept('${school.replace(/'/g, "\\'")}', '${d.replace(/'/g, "\\'")}')">×</span>
                 </div>`).join('')}
             </div>
@@ -298,23 +305,25 @@ async function renderManageSchools() {
 }
 
 async function openAddSchool() {
-  const name = prompt("Enter School/College Name:");
-  if (!name) return;
-  const hierarchy = await api('/api/hierarchy');
-  if (hierarchy[name]) { showToast('School already exists', 'error'); return; }
-  hierarchy[name] = [];
-  await api('/api/hierarchy', 'PUT', hierarchy);
-  renderManageSchools();
+  showPromptModal('Create New School', 'Enter the full name of the academic school or college:', 'e.g. School of Business', async (name) => {
+    const hierarchy = await api('/api/hierarchy');
+    if (hierarchy[name]) { showToast('School already exists', 'error'); return; }
+    hierarchy[name] = [];
+    await api('/api/hierarchy', 'PUT', hierarchy);
+    showToast('School created successfully', 'success');
+    renderManageSchools();
+  });
 }
 
 async function openAddDept(school) {
-  const dept = prompt(`Add department to ${school}:`);
-  if (!dept) return;
-  const hierarchy = await api('/api/hierarchy');
-  if (hierarchy[school].includes(dept)) { showToast('Department already exists', 'error'); return; }
-  hierarchy[school].push(dept);
-  await api('/api/hierarchy', 'PUT', hierarchy);
-  renderManageSchools();
+  showPromptModal('Add Department', `Department for ${school}:`, 'e.g. Dept. of Economics', async (dept) => {
+    const hierarchy = await api('/api/hierarchy');
+    if (hierarchy[school].includes(dept)) { showToast('Department already exists', 'error'); return; }
+    hierarchy[school].push(dept);
+    await api('/api/hierarchy', 'PUT', hierarchy);
+    showToast('Department added', 'success');
+    renderManageSchools();
+  });
 }
 
 async function deleteSchool(school) {
@@ -350,7 +359,7 @@ async function renderManageUsers() {
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Identity Management</div><div class="section-sub">Configure and maintain professional system accounts</div></div>
+        <div><div class="section-title">Users</div><div class="section-sub">Configure and maintain professional system accounts</div></div>
         <div class="section-actions">
           <button class="btn btn-report btn-sm" onclick="downloadReport('users')">📄 Export Directory</button>
           <button class="btn btn-primary" onclick="openAddUser()">➕ Register Identity</button>
@@ -399,7 +408,7 @@ async function renderManageUsers() {
                        <span class="btn-icon">✏️</span> Edit
                     </button>
                     ${u.id !== currentUser.id ? `
-                    <button class="btn manage-btn-delete" onclick="deleteUser('${u.id}', '${u.name}')" title="Revoke Access">
+                    <button class="btn manage-btn-delete" onclick="deleteUser('${esc(u.id)}', '${esc(u.name)}')" title="Revoke Access">
                        <span class="btn-icon">🗑️</span> Delete
                     </button>` : ''}
                   </div>
@@ -507,7 +516,7 @@ async function renderManageHalls() {
             <div class="hall-footer">
               <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditHall('${h.id}')">✏️ Edit</button>
               <button class="btn ${h.locked ? 'btn-success' : 'btn-gold'} btn-sm" onclick="event.stopPropagation();toggleHallLock('${h.id}',${h.locked})">${h.locked ? '🔓 Unlock' : '🔒 Lock'}</button>
-              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteHall('${h.id}','${h.name}')" style="grid-column: 1 / -1; border-radius:12px; margin-top:8px">🗑️ Remove from Catalog</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteHall('${esc(h.id)}','${esc(h.name)}')" style="grid-column: 1 / -1; border-radius:12px; margin-top:8px">🗑️ Remove from Catalog</button>
             </div>
           </div>`;
   }).join('')}
@@ -629,19 +638,43 @@ async function renderManageInventory() {
           <button class="btn btn-primary" onclick="openAddInventory()">➕ Add Item</button>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Name</th><th>Department</th><th>In Use Alone</th><th>Actions</th></tr></thead>
+      <div class="table-wrap" style="background:#ffffff; border-radius:24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border:1px solid #f1f5f9; overflow:hidden">
+        <table style="width:100%; border-collapse: collapse;">
+          <thead style="background:#f8fafc; border-bottom: 1px solid #f1f5f9">
+            <tr>
+              <th style="padding:20px; text-align:left; font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase">Name</th>
+              <th style="padding:20px; text-align:left; font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase">Department</th>
+              <th style="padding:20px; text-align:left; font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase">In Use Alone</th>
+              <th style="padding:20px; text-align:left; font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase">Actions</th>
+            </tr>
+          </thead>
           <tbody>
-            ${paginated.map(i => `<tr>
-              <td style="font-weight:700">${i.name} ${i.locked ? ' <span style="font-size:0.8rem" title="Blocked">🔒</span>' : ''}</td>
-              <td><span class="badge" style="background-color:${i.dept === 'it' ? '#6366f1' : (i.dept === 'reception' ? '#10b981' : (i.dept === 'pixesclub' ? '#38bdf8' : '#fb7185'))};color:#fff">${i.dept.toUpperCase()}</span></td>
-              <td><span class="in-use-pill">${i.in_use}</span></td>
-              <td><div class="td-actions">
-                <button class="btn btn-outline btn-sm" onclick="openEditInventory('${i.id}')">Edit Stock</button>
-                ${(currentUser.role !== 'reception' && currentUser.role !== 'it') ? `<button class="btn btn-sm ${i.locked ? 'btn-success' : 'btn-warning'}" style="color:#000" onclick="toggleInventoryLock('${i.id}', ${i.locked})">${i.locked ? 'Unblock' : 'Block'}</button>` : ''}
-                <button class="btn btn-danger btn-sm" onclick="deleteInventory('${i.id}','${i.name}')">Delete</button>
-              </div></td>
+            ${paginated.map(i => `
+            <tr style="border-bottom:1px solid #f8fafc; transition: all 0.2s" class="hover-row">
+              <td style="padding:16px 20px; vertical-align:middle">
+                <div style="display:flex; align-items:center; gap:12px">
+                  <span style="font-size:1.2rem">${i.dept.toLowerCase() === 'it' ? '🖥️' : (i.dept.toLowerCase() === 'reception' ? '🛎️' : '📦')}</span>
+                  <span style="font-weight:800; color:#1e293b; font-size:0.95rem">${esc(i.name)}</span>
+                  ${i.locked ? '<span style="color:#ef4444" title="Blocked">🔒</span>' : ''}
+                </div>
+              </td>
+              <td style="padding:16px 20px; vertical-align:middle">
+                <span class="badge" style="background-color:${i.dept === 'it' ? '#6366f1' : (i.dept === 'reception' ? '#10b981' : (i.dept === 'pixesclub' ? '#38bdf8' : '#fb7185'))}; color:#fff; padding:4px 12px; border-radius:8px; font-size:0.7rem; font-weight:800">
+                  ${i.dept.toUpperCase()}
+                </span>
+              </td>
+              <td style="padding:16px 20px; vertical-align:middle">
+                <div style="background:#fff7ed; color:#ea580c; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:0.9rem">
+                  ${i.in_use}
+                </div>
+              </td>
+              <td style="padding:16px 20px; vertical-align:middle">
+                <div class="td-actions" style="display:flex; gap:8px">
+                  <button class="btn btn-outline btn-sm" style="border-radius:10px; font-weight:700" onclick="openEditInventory('${i.id}')">Edit Stock</button>
+                  ${(currentUser.role !== 'reception' && currentUser.role !== 'it') ? `<button class="btn btn-sm ${i.locked ? 'btn-success' : 'btn-warning'}" style="border-radius:10px; font-weight:700" onclick="toggleInventoryLock('${i.id}', ${i.locked})">${i.locked ? 'Unblock' : 'Block'}</button>` : ''}
+                  <button class="btn btn-danger btn-sm" style="border-radius:10px; font-weight:700" onclick="deleteInventory('${esc(i.id)}','${esc(i.name)}')">Delete</button>
+                </div>
+              </td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -702,13 +735,16 @@ function openEditInventory(iid) {
 }
 async function submitEditInventory(iid) {
   await api(`/api/inventory/${iid}`, 'PUT', { stock_qty: parseInt(v('eInvQty')) });
-  closeModal(); showToast('Stock updated', 'success'); renderManageInventory();
+  closeModal(); showToast('Stock updated', 'success');
+  if (currentUser.role === 'admin') renderManageInventory();
+  else renderDeptInventory(currentUser.role);
 }
 async function deleteInventory(iid, name) {
-  showConfirmModal('Delete Item', `Remove "${name}" from system inventory?`, async () => {
+  showConfirmModal('Delete Item', `Remove "${esc(name)}" from system inventory?`, async () => {
     await api(`/api/inventory/${iid}`, 'DELETE');
     showToast('Item deleted', 'info');
-    renderManageInventory();
+    if (currentUser.role === 'admin') renderManageInventory();
+    else renderDeptInventory(currentUser.role);
   });
 }
 async function toggleInventoryLock(iid, locked) {
@@ -921,8 +957,8 @@ async function renderNewEvent() {
         </div>
 
         <!-- School / Department Selector -->
-        <div style="margin-top:18px;border-top:1.5px dashed #bae6fd;padding-top:16px">
-          <div style="font-size:0.82rem;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
+        <div style="margin-top:18px;border-top:1.5px dashed rgba(255,255,255,0.2);padding-top:16px">
+          <div style="font-size:0.82rem;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
             🎓 Participating Schools & Departments
           </div>
           <div id="schoolPicker" style="display:flex;flex-direction:column;gap:10px">
@@ -931,7 +967,7 @@ async function renderNewEvent() {
         </div>
 
         <!-- Special Requirements -->
-        <div style="margin-top:18px;border-top:1.5px dashed #bae6fd;padding-top:16px">
+        <div style="margin-top:18px;border-top:1.5px dashed rgba(255,255,255,0.2);padding-top:16px">
           <div class="label-premium-header">✨ Special Requirements & Facilities</div>
           <div class="field" style="margin-bottom:18px">
             <textarea id="evSpecialReq" rows="3" placeholder="Enter any extra setup, seating, or specific needs here…" style="border-color:#c4b5fd"></textarea>
@@ -962,7 +998,7 @@ async function renderNewEvent() {
       <div class="wpage" id="wpage2" style="display:none">
         <div class="section-header" style="margin-bottom:12px">
           <div>
-            <div style="font-size:0.95rem;font-weight:800;color:#1e40af">🏨 Select Your Venue(s)</div>
+            <div style="font-size:0.95rem;font-weight:800;color:#ffffff">🏨 Select Your Venue(s)</div>
             <div style="font-size:0.78rem;color:#64748b;margin-top:2px">Choose one or more halls for your event. Use the <strong>Multiple Selection</strong> mode for complex bookings.</div>
           </div>
           <div class="section-actions">
@@ -992,10 +1028,10 @@ async function renderNewEvent() {
         </div>
 
         <input type="hidden" id="evHall">
-        <div id="hallSelectedDisplay" style="margin-top:16px;display:none;padding:16px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:14px;border:1.5px solid #7dd3fc;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+        <div id="hallSelectedDisplay" style="margin-top:16px;display:none;padding:16px;background:var(--grad-green);border-radius:14px;border:1.5px solid #7dd3fc;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-size:0.7rem;font-weight:800;color:#0369a1;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Selected Venues</div>
+              <div style="font-size:0.7rem;font-weight:800;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Selected Venues</div>
               <div id="hallSelectedNames" style="color:#0c4a6e;font-weight:600;font-size:0.95rem"></div>
             </div>
             <div style="text-align:right">
@@ -1036,8 +1072,8 @@ async function renderNewEvent() {
 
       <!-- PAGE 5: PIXES CLUB -->
       <div class="wpage" id="wpage5" style="display:none">
-        <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:14px 18px;margin-bottom:16px;border:1.5px solid #7dd3fc">
-          <div style="font-size:0.85rem;font-weight:800;color:#0369a1">📸 Pixes Club — Photography Requirements</div>
+        <div style="background:var(--grad-green);border-radius:12px;padding:14px 18px;margin-bottom:16px;border:1.5px solid #7dd3fc">
+          <div style="font-size:0.85rem;font-weight:800;color:#ffffff">📸 Pixes Club — Photography Requirements</div>
           <div style="font-size:0.75rem;color:#64748b;margin-top:4px">Only available if Photography was selected in Step 1. Leave all at 0 if not needed.</div>
         </div>
         <div class="req-table" id="pixesReqTable">
@@ -1550,97 +1586,132 @@ function renderPaginationControls(total, page, perPage, context) {
     </div>`;
 }
 
+
 function eventCard(e, role) {
-  const statusBadge = {
-    dept_review: '<span class="em-badge" style="background:#e2e8f0;color:#475569;font-size:0.6rem;padding:3px 8px;border-radius:4px">DEPT REVIEW</span>',
-    principal_review: '<span class="em-badge" style="background:#e2e8f0;color:#475569;font-size:0.6rem;padding:3px 8px;border-radius:4px">PRINCIPAL</span>',
-    approved: '<span class="em-badge" style="background:var(--gold-lt);color:var(--gold);font-size:0.6rem;padding:3px 8px;border-radius:4px">APPROVED</span>',
-    rejected: '<span class="em-badge" style="background:var(--red-lt);color:var(--red);font-size:0.6rem;padding:3px 8px;border-radius:4px">REJECTED</span>',
-  }[e.status] || '';
+  // Enhanced status detection: Gold (Approved), Silver (Pending), Red (Rejected/Cancelled)
+  const isApproved = e.principal_decision === 'approved' || e.status === 'approved';
+  const isRejected = e.principal_decision === 'rejected' || e.status === 'rejected' || e.status === 'cancelled' || e.cancel_reason;
+  
+  const statusClass = isApproved ? 'status-approved-classic' : 
+                      (isRejected ? 'status-rejected-classic' : 'status-pending-classic');
+  
+  const statusLabel = isApproved ? 'SCHEDULED' : 
+                      (isRejected ? (e.status === 'cancelled' ? 'CANCELLED' : 'REJECTED') : 'PENDING');
 
-  let actions = '';
+  let adminActions = '';
   if (role === 'admin') {
-    actions = `
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-sm" onclick="event.stopPropagation();adminDeleteEvent('${e.id}')" title="Delete" style="background:#fee2e2;color:#dc2626;border:2.5px solid #ef4444;border-radius:14px;width:44px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 2px 5px rgba(220,38,38,0.1)">🗑️</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();downloadSingleEventReport('${e.id}')" title="Report" style="background:#eff6ff;color:#2563eb;border:2.5px solid #3b82f6;border-radius:14px;width:44px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 2px 5px rgba(37,99,235,0.1)">📄</button>
-        ${e.status !== 'approved' && e.status !== 'rejected' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();adminApproveEvent('${e.id}')" style="border-radius:14px;height:40px;padding:0 16px;font-weight:700;box-shadow:0 2px 5px rgba(5,150,105,0.1)">Quick Approve</button>` : ''}
-      </div>
-    `;
-  } else if (role === 'principal' && e.status === 'principal_review') {
-    actions = `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();openPrincipalModal('${e.id}')" style="border-radius:14px;height:40px;padding:0 20px;font-weight:700">Review Decision</button>`;
-  } else if (role === 'booker' && e.status === 'dept_review') {
-    actions = `<div style="display:flex;gap:8px">
-                 <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openEditEventModal('${e.id}')" style="border-radius:12px;height:38px;padding:0 15px;font-weight:700">Edit</button>
-                 <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();cancelEvent('${e.id}')" style="border-radius:12px;height:38px;padding:0 15px;font-weight:700">Cancel</button>
-               </div>`;
-  } else if (role === 'it' || role === 'reception') {
-    if (e.status === 'dept_review') {
-      const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
-      actions = myPending.length > 0 ?
-        `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">📦 Allocate</button>` :
-        `<span class="em-badge" style="background:var(--green-lt);color:var(--green)">✔ Allocated</span>`;
-    } else if (e.status === 'approved') {
-      const myReturns = e.requested_items.filter(i => i.dept === role && i.dept_approved && !i.returned && i.allocated_qty > 0);
-      if (myReturns.length > 0) {
-        actions = `<button class="btn btn-sm" style="background:#fef08a;color:#854d0e;border:1px solid #fde047" onclick="event.stopPropagation();processReturn('${e.id}','${role}')">↩️ Return</button>`;
-      }
-    }
-  } else if (role === 'pixesclub' || role === 'fineartsclub') {
-    if (e.status === 'dept_review') {
-      const myPending = e.requested_items.filter(i => i.dept === role && !i.dept_approved);
-      if (role === 'pixesclub') {
-        actions = myPending.length > 0 ? `
-            <button class="btn btn-success btn-sm" onclick="event.stopPropagation();openAllocModal('${e.id}','${role}')">✅ Accept</button>
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();rejectClubItems('${e.id}','${role}')">❌ Deny</button>` :
-          `<span class="em-badge" style="background:var(--green-lt);color:var(--green)">✔ Approved</span>`;
-      } else {
-        // Fine Arts Club only needs event details, no action buttons
-        actions = '';
-      }
-    } else if (e.status === 'approved') {
-      const myReturns = e.requested_items.filter(i => i.dept === role && i.dept_approved && !i.returned && i.allocated_qty > 0);
-      if (myReturns.length > 0) {
-        actions = `<button class="btn btn-sm" style="background:#fef08a;color:#854d0e;border:1px solid #fde047" onclick="event.stopPropagation();processReturn('${e.id}','${role}')">↩️ Return</button>`;
-      }
-    }
+    adminActions = `
+      <div class="v4-admin-actions">
+        <span onclick="event.stopPropagation();openEditEventModal('${esc(e.id)}')" title="Edit">✏️</span>
+        <span onclick="event.stopPropagation();adminDeleteEvent('${esc(e.id)}')" title="Delete">🗑️</span>
+      </div>`;
   }
 
-  let schoolStr = '';
-  if (e.departments && e.departments.length > 0 && e.departments[0].school) {
-    schoolStr = `<span class="em-school" style="color:var(--muted);font-weight:700;margin-left:8px;font-size:0.75rem;padding:2px 6px;background:var(--bg);border-radius:4px">🏛️ ${e.departments[0].school.toUpperCase()}</span>`;
-  }
+  // Agenda Handling
+  const agendaLink = e.agenda_path ? 
+    `<a href="${e.agenda_path}" target="_blank" class="v4-agenda-badge" onclick="event.stopPropagation()">📎 View Agenda</a>` : 
+    `<span class="v4-agenda-badge" style="background:#f1f5f9; color:#94a3b8; border-color:#e2e8f0; opacity:0.6">📎 No Agenda</span>`;
 
-  let cardStyle = `padding:10px; border-radius:12px;`;
-  if (e.status === 'approved') cardStyle += `background: rgba(22, 163, 74, 0.05); border: 1px solid rgba(22, 163, 74, 0.1);`;
-  else if (e.status === 'dept_review' || e.status === 'principal_review') cardStyle += `background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.1);`;
-  else if (e.status === 'scheduled') cardStyle += `background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.12);`;
-  else cardStyle += `background: #ffffff; border: 1px solid var(--border);`;
+  const footerActions = (role === 'admin' || role === 'principal') && e.status === 'principal_review' ? `
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-success btn-xs" onclick="event.stopPropagation();adminDecision('${esc(e.id)}', 'approve')">Accept</button>
+      <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();adminDecision('${esc(e.id)}', 'reject')">Reject</button>
+    </div>` : `<button class="btn btn-outline btn-sm v4-view-btn">View Details</button>`;
 
   return `
-    <div class="event-manage-card status-${e.status}" onclick="viewEventDetail('${e.id}')" style="cursor:pointer; ${cardStyle}">
-      <div class="em-header" style="margin-bottom:6px">
-        <div>
-           ${statusBadge}
-           <div class="em-title" style="font-size:0.85rem; font-weight:800; color:#1e293b">${e.title}</div>
+    <div class="v4-classic-card ${statusClass}" onclick="openPremiumEventDetails('${esc(e.id)}')" style="cursor:pointer">
+      <div class="v4-status-strip"></div>
+      
+      <div class="v4-header">
+        <div class="v4-title-box" style="padding-right: 0;">
+          <div class="v4-event-title" style="font-size: 1.05rem; margin-bottom: 4px;">${esc(e.title)}</div>
+          <div class="v4-status-pill">${statusLabel}</div>
         </div>
-        <div style="font-size:0.65rem; font-weight:700; color:var(--muted)">#${e.id.slice(-4).toUpperCase()}</div>
-      </div>
-      
-      <div style="font-size:0.7rem; color:var(--text); margin-bottom:6px; font-weight:600; opacity:0.8">👤 ${e.created_by_name || 'System'}${schoolStr}</div>
-      
-      <div class="em-meta" style="margin-bottom:8px; gap:6px; flex-wrap:wrap">
-        <div class="em-meta-item" style="font-size:0.7rem">📅 ${e.date}</div>
-        <div class="em-meta-item" style="font-size:0.7rem">⏰ ${e.time_slot.split('-')[0]}</div>
-        ${(role !== 'it' && role !== 'reception') ? `<div class="em-meta-item" style="font-size:0.7rem">🏛️ ${e.hall_name}</div>` : ''}
+        ${adminActions}
       </div>
 
-      <div class="em-actions" style="border-top:1px dashed rgba(0,0,0,0.06); padding-top:6px; gap:4px">
-        ${actions}
-        <button class="btn btn-success btn-xs" onclick="event.stopPropagation();viewEventDetail('${e.id}')" style="margin-left:auto; padding:2px 8px; font-size:0.65rem">Details</button>
+      <div class="v4-meta-grid" style="margin-bottom: 12px; border: none; background: transparent; padding: 0;">
+        <div class="v4-meta-item">
+          <span class="v4-icon">📅</span>
+          <span class="v4-text v4-date-val" style="color: #64748b;">${new Date(e.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+          <span style="display:none" class="raw-date">${e.date}</span>
+        </div>
+        <div class="v4-meta-item">
+          <span class="v4-icon">⏰</span>
+          <span class="v4-text" style="color: #64748b;">${esc(e.time_slot.split(' ')[0])}</span>
+        </div>
+        <div class="v4-meta-item v4-full-width">
+          <span class="v4-icon">🏛️</span>
+          <span class="v4-text truncate" style="color: #64748b;">${esc(e.hall_name)}</span>
+        </div>
       </div>
+
+      <div class="v4-footer" style="padding-top: 12px; border-top: 1px solid #f1f5f9;">
+        <div class="v4-booker" style="flex:1">
+          <div class="v4-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">${(e.coordinator || e.created_by_name || 'U').charAt(0).toUpperCase()}</div>
+          <div class="v4-booker-info">
+            <div class="v4-booker-name" style="font-size: 0.8rem; color: #1e293b;">${esc(e.coordinator || e.created_by_name)}</div>
+            ${agendaLink}
+          </div>
+        </div>
+        ${footerActions}
+      </div>
+    </div>`;
+}
+
+// ─── NOTIFICATION POLLING ───────────────────────────────────────────────────
+function startNotificationPolling() {
+  checkNotifications();
+  setInterval(checkNotifications, 30000); // Check every 30s
+}
+
+async function checkNotifications() {
+  try {
+    const notifs = await api('/api/notifications');
+    const unread = notifs.filter(n => !n.read_by.includes(currentUser.id));
+    if (unread.length > 0) {
+      unread.forEach(n => {
+        showRejectionToast(n);
+      });
+    }
+  } catch (e) { console.error("Notification check failed"); }
+}
+
+function showRejectionToast(n) {
+  // Check if toast already exists to avoid spam
+  if (document.getElementById(`toast-${n.id}`)) return;
+  
+  const cont = document.getElementById('toastContainer') || createToastContainer();
+  const toast = document.createElement('div');
+  toast.id = `toast-${n.id}`;
+  toast.className = 'premium-toast rejection-toast';
+  toast.innerHTML = `
+    <div class="toast-icon">⚠️</div>
+    <div class="toast-body">
+      <div class="toast-title">Booking Attention Required</div>
+      <div class="toast-text">${n.message} (Event: ${n.event_title})</div>
     </div>
+    <div class="toast-close" onclick="markNotifRead('${n.id}')">×</div>
   `;
+  cont.appendChild(toast);
+  setTimeout(() => toast.classList.add('visible'), 100);
+}
+
+function createToastContainer() {
+  const c = document.createElement('div');
+  c.id = 'toastContainer';
+  c.className = 'toast-container';
+  document.body.appendChild(c);
+  return c;
+}
+
+async function markNotifRead(id) {
+  await api('/api/notifications/read', 'POST', { id });
+  const t = document.getElementById(`toast-${id}`);
+  if (t) {
+    t.classList.remove('visible');
+    setTimeout(() => t.remove(), 300);
+  }
 }
 
 // ─── CLUB REQUESTS (PIXES + FINE ARTS) ───────────────────────────────────────
@@ -1781,6 +1852,24 @@ async function renderDeptRequests(dept) {
     </div>`: ''}`;
 }
 
+function getItemIcon(name, dept) {
+  const n = name.toLowerCase();
+  if (n.includes('chair')) return '🪑';
+  if (n.includes('table')) return '🖼️';
+  if (n.includes('lamp') || n.includes('light')) return '💡';
+  if (n.includes('card') || n.includes('id')) return '🪪';
+  if (n.includes('folder')) return '📁';
+  if (n.includes('bottle')) return '🥤';
+  if (n.includes('clean') || n.includes('mop')) return '🧹';
+  if (n.includes('mic') || n.includes('audio')) return '🎤';
+  if (n.includes('projector')) return '📽️';
+  if (n.includes('laptop') || n.includes('computer')) return '💻';
+  if (n.includes('cable') || n.includes('wire')) return '🔌';
+  if (n.includes('bell')) return '🛎️';
+  // Fallback to department defaults
+  return dept === 'it' ? '🖥️' : (dept === 'reception' ? '🛎️' : (dept === 'pixesclub' ? '📸' : '🎭'));
+}
+
 // ─── DEPT INVENTORY ───────────────────────────────────────────────────────────
 async function renderDeptInventory(dept) {
   const items = await api('/api/inventory?dept=' + dept);
@@ -1791,7 +1880,10 @@ async function renderDeptInventory(dept) {
   document.getElementById('pageContent').innerHTML = `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">${dept === 'it' ? 'IT' : (dept === 'reception' ? 'Reception' : (dept === 'pixesclub' ? 'Pixes Club' : 'Fine Arts Club'))} Command Center — Inventory</div></div>
+        <div>
+          <div class="section-title">${dept === 'it' ? 'IT' : (dept === 'reception' ? 'Reception' : (dept === 'pixesclub' ? 'Pixes Club' : 'Fine Arts Club'))} Asset Hub</div>
+          <div class="section-sub">Institutional equipment and inventory registry</div>
+        </div>
         <div class="section-actions">
           <button class="btn btn-report btn-sm" onclick="downloadReport('inventory-${dept}')">📄 Export</button>
           <button class="btn btn-primary" onclick="openAddDeptInventory('${dept}')">➕ Add Item</button>
@@ -1799,15 +1891,13 @@ async function renderDeptInventory(dept) {
       </div>
       <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
         ${paginated.map((i, idx) => {
-    const grads = ['grad-violet', 'grad-ocean', 'grad-emerald', 'grad-sunset', 'grad-berry', 'grad-midnight'];
-    const gradClass = grads[idx % grads.length];
     const isLowStock = (i.stock_qty - i.in_use) <= 5;
     return `
-          <div class="inv-card-premium ${i.locked ? 'inv-blocked' : 'inv-clean'}">
+          <div class="inv-card-premium inst-animate ${i.locked ? 'inv-blocked' : 'inv-clean'}" style="animation-delay: ${idx * 0.05}s">
             <div class="inv-card-inner">
               <div class="inv-header" style="justify-content: space-between; align-items: start; border-bottom: none; padding-bottom: 0;">
                 <div class="inv-name-group">
-                  <div class="inv-type-icon">${dept === 'it' ? '🖥️' : (dept === 'reception' ? '🛎️' : (dept === 'pixesclub' ? '📸' : '🎭'))}</div>
+                  <div class="inv-type-icon">${getItemIcon(i.name, dept)}</div>
                   <div class="inv-name-text">${i.name}</div>
                 </div>
                 ${i.locked ? '<div title="Item Blocked / Locked" style="font-size:1.2rem; background:#fee2e2; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">🔒</div>' : ''}
@@ -1829,11 +1919,15 @@ async function renderDeptInventory(dept) {
                 </button>
               </div>
             </div>
-          </div>`}).join('')}
+          </div>`;
+  }).join('')}
       </div>
       ${renderPaginationControls(items.length, page, EVENTS_PER_PAGE, 'dept-inventory')}
     </div>`;
 }
+
+
+
 function openAddDeptInventory(dept) {
   document.getElementById('modalTitle').textContent = 'Add Inventory Item';
   document.getElementById('modalBody').innerHTML = `
@@ -1847,6 +1941,7 @@ function openAddDeptInventory(dept) {
     </div>`;
   openModal();
 }
+
 async function submitAddDeptInventory(dept) {
   const body = { name: v('dInvName'), dept, stock_qty: parseInt(v('dInvQty')) || 0 };
   if (!body.name) { showToast('Enter item name', 'error'); return; }
@@ -1856,7 +1951,6 @@ async function submitAddDeptInventory(dept) {
 // ─── RETURNS ──────────────────────────────────────────────────────────────────
 async function renderReturns(dept) {
   const events = await api('/api/events');
-  // Logic Fix: Visible after allocation (dept_approved), regardless of event date
   const returnable = events.filter(e =>
     (e.status === 'approved' || e.status === 'principal_review' || e.status === 'dept_review') &&
     e.requested_items.some(i => i.dept === dept && i.dept_approved && !i.returned)
@@ -1876,86 +1970,78 @@ async function renderReturns(dept) {
         </div>
       </div>
       ${returnable.length === 0 ? emptyState('📦', 'All items returned', 'Excellent! No pending equipment returns for your department.') :
-      `<div class="cards-grid">${returnable.map(e => {
+      `<div class="upcoming-gallery-grid" style="margin-top:16px;">${returnable.map((e, idx) => {
         const myItems = e.requested_items.filter(i => i.dept === dept && i.dept_approved && !i.returned);
+        const emoji = dept === 'it' ? '🖥️' : '🛎️';
         return `
-          <div class="event-card-return" style="background: linear-gradient(145deg, #ffffff, #f8fafc); border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <div class="return-card-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-              <div class="return-title-box">
-                <div class="return-event-title" style="font-size: 1rem; font-weight: 900; color: #1e293b;">${e.title}</div>
-                <div class="return-event-date" style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 2px;">📅 ${e.date}</div>
-              </div>
-              <div class="return-status-tag" style="background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; border: 1px solid #fed7aa;">⚠️ PENDING</div>
+          <div class="v4-classic-card v4-card-red-feat inst-animate" onclick="openPremiumEventDetails('${e.id}')" 
+            style="cursor:pointer; border-radius: 40px; padding: 24px; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 240px; animation-delay: ${idx * 0.05}s">
+            
+            <div class="featured-triangle" style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; clip-path: polygon(100% 0, 0 0, 100% 100%); z-index: 1;"></div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; position: relative; z-index: 2;">
+              <div style="font-size:1.1rem; font-weight: 900; color: #1e293b; letter-spacing: -0.02em;">${esc(e.title)}</div>
+              <div style="background:#fee2e2; color:#ef4444; padding:6px 14px; border-radius:14px; font-size:0.75rem; font-weight:900; letter-spacing:0.05em; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15)">RETURN PENDING</div>
             </div>
             
-            <div class="return-items-box-premium" style="background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 16px;">
-              <div class="return-items-label-premium" style="font-size: 0.65rem; font-weight: 800; color: #475569; margin-bottom: 8px; letter-spacing: 0.05em;">ITEMS TO COLLECT:</div>
-              <div class="return-items-list-premium">
-                ${myItems.map(i => `
-                  <div class="return-item-row-premium" style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
-                    <span class="item-name-premium">${i.item_name}</span>
-                    <span class="item-qty-premium" style="color: #059669;">× ${i.allocated_qty}</span>
-                  </div>`).join('')}
-              </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:24px; padding:20px; margin-bottom: 16px; flex: 1;">
+               <div style="display:flex; align-items:center; gap:10px; font-size:0.7rem; font-weight:900; color:#94a3b8; text-transform:uppercase; margin-bottom:14px; letter-spacing:0.1em">
+                 <span>📦</span> PENDING RECOVERY
+               </div>
+               ${myItems.map(i => `
+                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                   <div style="display:flex; align-items:center; gap:10px">
+                     <span style="font-size:1.1rem">${emoji}</span>
+                     <span style="font-size:1rem; font-weight:800; color:#1e293b">${esc(i.item_name)}</span>
+                   </div>
+                   <span style="background:#fff7ed; color:#ea580c; border:1px solid #ffedd5; padding:4px 14px; border-radius:12px; font-size:0.85rem; font-weight:900">× ${i.allocated_qty}</span>
+                 </div>
+               `).join('')}
             </div>
 
-            <div class="return-card-footer" style="padding-top:12px; border-top: 1px dashed #cbd5e1; display:flex; flex-direction:column; gap:12px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                <div class="booker-info" style="display: flex; align-items: center; gap: 8px;">
-                  <div class="booker-avatar" style="background:#dbeafe; color:#2563eb; width:32px; height:32px; font-size:0.8rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;">${e.created_by_name.charAt(0)}</div>
-                  <div style="display:flex; flex-direction:column;">
-                      <div style="font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">Booked by</div>
-                      <div style="font-size:0.85rem; font-weight:800; color:#1e293b;">${e.created_by_name}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div style="display:flex; gap:8px; width:100%;">
-                <button class="btn-return-custom" style="flex:1; padding: 8px; font-size: 0.75rem; font-weight: 800; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; cursor: pointer;" onclick="openCustomReturnModal('${e.id}','${dept}')">
-                  ⚙️ Custom
-                </button>
-                <button class="btn-return-all" style="flex:1; padding: 8px; font-size: 0.75rem; font-weight: 800; border-radius: 8px; background: #16a34a; color: #fff; border: none; cursor: pointer;" onclick="processReturn('${e.id}','${dept}')">
-                  ↩️ Return All
-                </button>
-              </div>
+            <div style="display:flex; gap:12px; margin-top: auto;">
+               <button class="btn btn-outline" style="flex:1; border-radius:16px; font-weight:800; padding:14px; font-size:0.9rem" onclick="event.stopPropagation();openCustomReturnModal('${esc(e.id)}','${dept}')">⚙️ Partial</button>
+               <button class="btn view-details-btn" style="flex:1.2; color:#fff; border:none; border-radius:16px; font-weight:900; padding:14px; font-size:0.9rem" onclick="event.stopPropagation();processReturn('${esc(e.id)}','${dept}')">🔄 Bulk Return</button>
             </div>
           </div>`;
-      }).join('')}`}
+      }).join('')}</div>`}
     </div>
 
     ${returned.length > 0 ? `
     <div class="section">
       <div class="section-header">
-        <div><div class="section-title">Recently Returned Histories</div></div>
+        <div><div class="section-title">Verified Returns History</div><div class="section-sub">Officially logged and verified equipment recoveries</div></div>
       </div>
       <div class="history-cards-grid">
-        ${pagReturned.map(e => {
+        ${pagReturned.map((e, idx) => {
         const myReturnedItems = e.requested_items.filter(i => i.dept === dept && i.returned);
         return `
-            <div class="history-receipt-card">
+            <div class="history-receipt-card inst-animate inst-glow-success" style="animation-delay: ${idx * 0.05}s">
               <div class="receipt-header">
-                <div class="receipt-icon">📜</div>
+                <div class="receipt-icon" style="background:#f0fdf4; padding:8px; border-radius:12px">🟢</div>
                 <div class="receipt-info">
-                  <div class="receipt-event">${e.title}</div>
-                  <div class="receipt-date">Returned on ${e.date}</div>
+                  <div class="receipt-event" style="font-size:1.05rem">${esc(e.title)}</div>
+                  <div class="receipt-date">Recovered on ${new Date(e.date).toLocaleDateString()}</div>
                 </div>
               </div>
-              <div class="receipt-body">
+              <div class="receipt-body" style="border-top:1px dashed #e2e8f0; padding-top:12px">
                 ${myReturnedItems.map(i => `
-                  <div class="receipt-item">
-                    <span>${i.item_name}</span>
-                    <span class="qty-tag">qty: ${i.returned_qty || i.allocated_qty}</span>
+                  <div class="receipt-item" style="display:flex; justify-content:space-between; margin-bottom:6px">
+                    <span style="font-weight:600; color:#475569">${esc(i.item_name)}</span>
+                    <span class="qty-tag" style="background:#f1f5f9; color:#64748b; font-weight:800; padding:2px 8px; border-radius:4px; font-size:0.7rem">qty: ${i.returned_qty || i.allocated_qty}</span>
                   </div>
                 `).join('')}
               </div>
-              <div class="receipt-footer">
-                <span class="status-success">✔️ FULLY RETURNED</span>
+              <div class="receipt-footer" style="margin-top:12px; display:flex; justify-content:flex-end; align-items:center; gap:8px">
+                <span style="font-size:0.55rem; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em">Verification ID: #${Math.floor(Math.random()*10000)}</span>
+                <span style="font-size:0.65rem; font-weight:800; color:#10b981; background:#f0fdf4; padding:4px 10px; border-radius:20px; border:1px solid rgba(16, 185, 129, 0.2)">✔️ VERIFIED RECOVERY</span>
               </div>
             </div>`;
       }).join('')}
       </div>
       ${renderPaginationControls(returned.length, page, EVENTS_PER_PAGE, 'dept-returns')}
-    </div>` : ''}`;
+    </div>` : ''}
+  `;
 }
 
 async function processReturn(eid, dept) {
@@ -2013,46 +2099,43 @@ async function submitCustomReturn(eid, dept) {
 
 function renderProgressChart(e) {
   const status = e.status;
-
-  // 5-step workflow: Booker → IT → Reception → Principal → Approved
   const stages = [
-    { id: 'booked', label: 'Booker' },
-    { id: 'it', label: 'IT' },
-    { id: 'reception', label: 'Reception' },
-    { id: 'principal', label: 'Principal' },
-    { id: 'approved', label: 'Approved' }
+    { id: 'booked', label: 'Booking', icon: '📝' },
+    { id: 'it', label: 'IT', icon: '🖥️' },
+    { id: 'reception', label: 'Reception', icon: '🛎️' },
+    { id: 'principal', label: 'Principal', icon: '🎓' }
   ];
 
-  if (status === 'rejected') {
-    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">❌ Event Proposal Rejected by Principal</div>`;
-  }
-  if (status === 'cancelled') {
-    return `<div style="color:#ef4444;font-weight:700;font-size:0.8rem;text-align:center;padding:12px;background:#fef2f2;border-radius:10px;border:1px solid #fee2e2;margin:10px 0">🚫 Event Cancelled</div>`;
+  if (status === 'rejected' || status === 'cancelled') {
+    return `<div class="status-halt-banner">
+      <span class="halt-icon">${status === 'rejected' ? '❌' : '🚫'}</span>
+      <div class="halt-text">
+        <div class="halt-title">Institutional Halt: ${status.toUpperCase()}</div>
+        <div class="halt-sub">${e.cancel_reason || e.principal_note || 'Administrative decision final.'}</div>
+      </div>
+    </div>`;
   }
 
-  // Determine which step is active based on status + IT/Reception sub-status
   let currentIdx = 0;
   if (status === 'dept_review') {
     const ri = e.requested_items || [];
     const itDone = ri.filter(i => i.dept === 'it').every(i => i.dept_approved || i.dept_rejected);
-    currentIdx = itDone ? 2 : 1;  // IT done → Reception active; else IT active
+    currentIdx = itDone ? 2 : 1;
   } else if (status === 'principal_review') {
     currentIdx = 3;
   } else if (status === 'approved') {
-    currentIdx = 4;
+    currentIdx = 3; /* All stages complete — Principal is the final step */
   }
 
   return `
-  <div class="status-timeline">
+  <div class="premium-stepper">
     ${stages.map((stage, idx) => {
-    let cls = '';
-    if (idx < currentIdx) cls = 'completed';
-    else if (idx === currentIdx) cls = 'active';
-    else cls = 'pending';
+    let cls = (idx < currentIdx) ? 'completed' : (idx === currentIdx ? 'active' : 'pending');
     return `
-        <div class="status-step ${cls}">
-          <div class="step-dot">${idx < currentIdx ? '✓' : idx + 1}</div>
-          <div class="step-label">${stage.label}</div>
+        <div class="stepper-node ${cls}">
+          <div class="node-icon-wrap">${idx < currentIdx ? '✓' : stage.icon}</div>
+          <div class="node-label">${stage.label}</div>
+          ${idx < stages.length - 1 ? `<div class="node-line"></div>` : ''}
         </div>
       `;
   }).join('')}
@@ -2078,48 +2161,125 @@ function renderMiniStepper(status) {
 
 
 // ─── VIEW EVENT DETAIL ────────────────────────────────────────────────────────
-async function viewEventDetail(eid) {
+async function openPremiumEventDetails(eid) {
   const e = await api('/api/events/' + eid);
   const itItems = e.requested_items.filter(i => i.dept === 'it');
   const recItems = e.requested_items.filter(i => i.dept === 'reception');
-  document.getElementById('modalTitle').textContent = e.title;
+  const clubItems = e.requested_items.filter(i => i.dept === 'pixesclub' || i.dept === 'fineartsclub');
+
+  const statusClass = e.principal_decision === 'approved' ? 'status-approved-inst' : 
+                      (e.principal_decision === 'rejected' ? 'status-rejected-inst' : 
+                      (e.cancel_reason ? 'status-cancelled-inst' : 'status-pending-inst'));
+
+  document.getElementById('modalTitle').textContent = 'Event Details';
   document.getElementById('modalBody').innerHTML = `
-    ${renderProgressChart(e)}
-    <div class="detail-section">
-      <h4>Event Info</h4>
-      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${e.date}</span></div>
-      <div class="detail-row"><span class="detail-label">Time Slot</span><span class="detail-value">${e.time_slot}</span></div>
-      <div class="detail-row"><span class="detail-label">Hall</span><span class="detail-value">${e.hall_name}</span></div>
-      <div class="detail-row"><span class="detail-label">Budget ID</span><span class="detail-value" style="color:var(--gold)">${e.budget_id || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${e.status.replace(/_/g, ' ').toUpperCase()}</span></div>
-      ${e.coordinator ? `<div class="detail-row"><span class="detail-label">Coordinator</span><span class="detail-value">${e.coordinator}</span></div>` : ''}
-      ${e.expected_count ? `<div class="detail-row"><span class="detail-label">Expected Attendance</span><span class="detail-value">${e.expected_count}</span></div>` : ''}
-      ${e.description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value" style="max-width:260px;text-align:right">${e.description}</span></div>` : ''}
-    </div>
-    ${(e.has_intro_video || e.has_dance) ? `
-    <div class="detail-section">
-      <h4>Special Requirements</h4>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${e.has_intro_video ? '<span class="req-tag">🎬 Intro Video</span>' : ''}
-        ${e.has_dance ? '<span class="req-tag">💃 Dance Performance</span>' : ''}
+    <div class="modal-premium-dossier" id="eventDossier">
+      <div class="dossier-header ${statusClass}">
+        <div class="dossier-header-top">
+          <div class="dossier-id">REF# ${e.id}</div>
+          <div class="dossier-status-badge">${e.status.replace(/_/g, ' ').toUpperCase()}</div>
+        </div>
+        <h2 class="dossier-title">${esc(e.title)}</h2>
+        <div class="dossier-coordinator"><span class="label">COORDINATOR</span> ${esc(e.coordinator)}</div>
       </div>
-    </div>`: ''}
-    ${itItems.length > 0 ? `<div class="detail-section"><h4>IT Items</h4>
-      <table class="alloc-table"><thead><tr><th>Item</th><th>Requested</th><th>Allocated</th><th>Status</th></tr></thead>
-      <tbody>${itItems.map(i => `<tr><td>${i.item_name}</td><td>${i.requested_qty}</td><td>${i.allocated_qty}</td>
-        <td>${i.dept_approved ? '<span class="badge badge-approved">Done</span>' : '<span class="badge badge-pending">Pending</span>'}</td>
-      </tr>`).join('')}</tbody></table></div>` : ''}
-    ${recItems.length > 0 ? `<div class="detail-section"><h4>Reception Items</h4>
-      <table class="alloc-table"><thead><tr><th>Item</th><th>Requested</th><th>Allocated</th><th>Status</th></tr></thead>
-      <tbody>${recItems.map(i => `<tr><td>${i.item_name}</td><td>${i.requested_qty}</td><td>${i.allocated_qty}</td>
-        <td>${i.dept_approved ? '<span class="badge badge-approved">Done</span>' : '<span class="badge badge-pending">Pending</span>'}</td>
-      </tr>`).join('')}</tbody></table></div>` : ''}
-    ${e.principal_note ? `<div class="detail-section"><h4>Principal's Note</h4>
-      <div style="background:var(--bg);padding:12px;border-radius:9px;font-size:0.875rem;color:var(--text2);line-height:1.6">${e.principal_note}</div>
-    </div>`: ''}
-    <div class="modal-footer" style="padding:0;margin-top:4px">
-      <button class="btn btn-report" onclick="downloadSingleEventReport('${eid}');closeModal()">📄 Download Report</button>
-      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+
+      <div class="dossier-body">
+        ${renderProgressChart(e)}
+
+        <div class="dossier-metrics-grid">
+          <div class="metric-block">
+            <span class="m-icon">📅</span>
+            <div class="m-info">
+              <div class="m-label">SCHEDULED DATE</div>
+              <div class="m-val">${new Date(e.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+            </div>
+          </div>
+          <div class="metric-block">
+            <span class="m-icon">🏛️</span>
+            <div class="m-info">
+              <div class="m-label">PRIMARY VENUE</div>
+              <div class="m-val">${esc(e.hall_name)}</div>
+            </div>
+          </div>
+          <div class="metric-block">
+            <span class="m-icon">👥</span>
+            <div class="m-info">
+              <div class="m-label">EXPECTED COUNT</div>
+              <div class="m-val">${e.expected_count} Seats</div>
+            </div>
+          </div>
+          <div class="metric-block">
+            <span class="m-icon">⏰</span>
+            <div class="m-info">
+              <div class="m-label">TIME SLOT</div>
+              <div class="m-val">${esc(e.time_slot)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dossier-content-split">
+          <div class="dossier-main-col">
+            <div class="dossier-block">
+              <h4 class="dossier-block-title">📋 Protocol Overview</h4>
+              <div class="detail-pair"><span class="dp-l">Budget ID</span><span class="dp-v gold-glow">${e.budget_id || '—'}</span></div>
+              <div class="detail-pair"><span class="dp-l">Event Category</span><span class="dp-v">${esc(e.event_type || 'Institution Standard')}</span></div>
+              <div class="detail-pair"><span class="dp-l">Resource Person</span><span class="dp-v">${esc(e.resource_person || '—')}</span></div>
+              <div class="detail-pair" style="flex-direction:column; align-items:flex-start; margin-top:12px">
+                <span class="dp-l">Agenda / Brief</span>
+                <div class="dp-v" style="font-weight:400; color:#475569; letter-spacing:0; margin-top:4px">${esc(e.description || 'No description provided.')}</div>
+              </div>
+            </div>
+
+            ${(e.has_intro_video || e.has_dance || e.has_photos || e.has_video) ? `
+            <div class="dossier-block">
+              <h4 class="dossier-block-title">⚡ Special Requirements</h4>
+              <div class="req-tag-cloud">
+                ${e.has_intro_video ? '<span>🎬 Intro Video</span>' : ''}
+                ${e.has_dance ? '<span>💃 Dance/Perf</span>' : ''}
+                ${e.has_photos ? '<span>📸 Photo Rec</span>' : ''}
+                ${e.has_video ? '<span>🎥 Video Rec</span>' : ''}
+              </div>
+            </div>` : ''}
+          </div>
+
+          <div class="dossier-side-col">
+            <div class="dossier-block">
+              <h4 class="dossier-block-title">📦 Resource Allocation</h4>
+              ${itItems.length + recItems.length + clubItems.length === 0 ? 
+                '<div style="color:#94a3b8; font-size:0.8rem; padding:10px">No hardware requirements logged.</div>' : ''}
+              
+              ${itItems.map(i => `
+                <div class="allocation-item">
+                  <div class="ai-name">🖥️ ${esc(i.item_name)}</div>
+                  <div class="ai-status ${i.dept_approved ? 'ok' : 'pending'}">${i.allocated_qty} / ${i.requested_qty}</div>
+                </div>`).join('')}
+              
+              ${recItems.map(i => `
+                <div class="allocation-item">
+                  <div class="ai-name">🛎️ ${esc(i.item_name)}</div>
+                  <div class="ai-status ${i.dept_approved ? 'ok' : 'pending'}">${i.allocated_qty} / ${i.requested_qty}</div>
+                </div>`).join('')}
+
+              ${clubItems.map(i => `
+                <div class="allocation-item">
+                  <div class="ai-name">${i.dept === 'pixesclub' ? '📸' : '🎭'} ${esc(i.item_name)}</div>
+                  <div class="ai-status ${i.dept_approved ? 'ok' : 'pending'}">${i.allocated_qty} / ${i.requested_qty}</div>
+                </div>`).join('')}
+            </div>
+
+            ${e.principal_note ? `
+            <div class="dossier-block" style="background:#fff7ed; border:1px solid #ffedd5">
+              <h4 class="dossier-block-title" style="color:#c2410c">💬 Administrative Note</h4>
+              <div style="font-size:0.85rem; color:#9a3412; line-height:1.5">${esc(e.principal_note)}</div>
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding:24px; border-radius: 0 0 28px 28px; background:#f8fafc; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:12px">
+        <button class="btn btn-report" onclick="downloadSingleEventReport('${eid}');closeModal()" style="padding:10px 24px; min-width:180px">📄 Export Official Document</button>
+        <button class="btn btn-outline" onclick="closeModal()" style="min-width:100px">Close</button>
+      </div>
     </div>`;
   openModal();
 }
@@ -2335,46 +2495,44 @@ function getUpcomingEventsHtml(allEvents) {
 }
 
 function renderUpcomingCard(e, idx, row) {
-  const isMyPending = currentUser.role === 'booker' && (e.status === 'dept_review' || e.status === 'principal_review');
-  const accentClass = row === 'row1' ? 'row-featured' : 'row-regular';
+  const status = e.status === 'approved' ? 'approved' : (e.status === 'cancelled' ? 'cancelled' : 'pending');
+  const label = status === 'approved' ? 'SCHEDULED' : (status === 'pending' ? 'UPCOMING' : 'CANCELLED');
 
   return `
-    <div class="upcoming-card-box ${accentClass}" onclick="viewEventDetail('${e.id}')" style="cursor:pointer; background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #bbf7d0; box-shadow: 0 10px 30px rgba(22, 163, 74, 0.08); padding:12px">
-      <div class="card-corner-triangle" style="border-color: transparent #16a34a transparent transparent;"></div>
-      <div class="upcoming-card-top" style="margin-bottom: 12px;">
-        <div class="upcoming-card-title" style="font-size:0.95rem; line-height:1.2; font-weight:900; color:#064e3b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:60px">${e.title}</div>
-        <div class="upcoming-card-status-pill" style="background:#16a34a; color:#fff; padding:3px 10px; font-size:0.65rem; border-radius:6px">
-          Scheduled
-        </div>
-      </div>
+    <div class="v4-upcoming-card-box inst-animate" onclick="openPremiumEventDetails('${e.id}')" 
+      style="cursor:pointer; animation-delay: ${idx * 0.05}s">
       
-      <div class="upcoming-card-meta-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px; background: rgba(22, 163, 74, 0.04); padding:10px; border-radius:12px; border:1px solid rgba(22, 163, 74, 0.08);">
-        <div class="meta-item" style="display:flex; align-items:center; gap:8px">
-          <span style="font-size:0.85rem">📅</span>
-          <span style="font-size:0.75rem; font-weight:800; color:#064e3b">${e.date}</span>
+      <div class="featured-triangle" style="position: absolute; top: 0; right: 0; width: 110px; height: 110px; clip-path: polygon(100% 0, 0 0, 100% 100%); z-index: 1; background: #10b981;"></div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; position: relative; z-index: 2;">
+        <div style="font-size: 1.1rem; font-weight: 900; color: #064e3b; letter-spacing: -0.02em;">${esc(e.title)}</div>
+        <div class="v4-scheduled-pill-luxury">${label}</div>
+      </div>
+
+      <div class="v4-mint-meta-box">
+        <div class="v4-meta-row">
+          <div class="v4-meta-item">
+            <span style="font-size:1.1rem">📅</span> <span>${e.date}</span>
+          </div>
+          <div class="v4-meta-item">
+            <span style="font-size:1.1rem">⏰</span> <span>${esc(e.time_slot.split(' ')[0])}</span>
+          </div>
         </div>
-        <div class="meta-item" style="display:flex; align-items:center; gap:8px">
-          <span style="font-size:0.85rem">⏰</span>
-          <span style="font-size:0.75rem; font-weight:800; color:#064e3b">${e.time_slot.split(' ')[0]}</span>
-        </div>
-        <div class="meta-item" style="display:flex; align-items:center; gap:8px; grid-column: span 2; border-top: 1px solid rgba(22, 163, 74, 0.1); padding-top:4px">
-          <span style="font-size:0.85rem">🏛️</span>
-          <span style="font-size:0.75rem; font-weight:800; color:#064e3b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${e.hall_name}</span>
+        <div style="display: flex; align-items: center; gap: 10px; border-top: 1px solid rgba(22,101,52,0.1); padding-top: 14px; font-size:0.9rem; font-weight:800; color:#166534">
+          <span style="font-size:1.1rem">🏛️</span> <span>${esc(e.hall_name)}</span>
         </div>
       </div>
 
-      <div class="upcoming-card-footer" style="border-top: 1px dashed #bbf7d0; padding-top: 10px;">
-        <div class="organizer-info" style="display:flex; align-items:center; gap:8px">
-          <div style="width:32px; height:32px; background:#16a34a; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:0.8rem">${e.created_by_name.charAt(0)}</div>
-          <span style="font-size:0.75rem; font-weight:800; color:#064e3b">${e.created_by_name}</span>
+      <div class="v4-card-footer-luxury">
+        <div class="v4-avatar-square-box">
+          <div class="v4-avatar-square">${(e.coordinator || 'U').charAt(0).toUpperCase()}</div>
+          <div class="v4-avatar-name">${esc(e.coordinator || e.created_by_name)}</div>
         </div>
-        <button class="btn btn-primary" style="background:#16a34a; border:none; padding:5px 12px; font-size:0.7rem; font-weight:800; border-radius:8px" onclick="event.stopPropagation();viewEventDetail('${e.id}')">View</button>
+        <button class="v4-view-btn-luxury" onclick="event.stopPropagation();openPremiumEventDetails('${e.id}')">View</button>
       </div>
     </div>`;
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════════
 //  REPORTS PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 async function renderReports() {
@@ -2431,13 +2589,45 @@ async function renderReports() {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section premium-overview">
+      <div class="section-overlay-red"></div>
       <div class="section-header"><div class="section-title">Quick Stats</div></div>
-      <div class="stats-row">
-        <div class="stat-card sc-blue"><div class="stat-icon">📅</div><div class="stat-label">Total Events</div><div class="stat-value stat-accent">${stats.total_events}</div></div>
-        <div class="stat-card sc-green"><div class="stat-icon">✅</div><div class="stat-label">Approved</div><div class="stat-value stat-green">${stats.approved}</div></div>
-        <div class="stat-card sc-gold"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value stat-gold">${stats.pending}</div></div>
-        <div class="stat-card sc-red"><div class="stat-icon">❌</div><div class="stat-label">Rejected</div><div class="stat-value stat-red">${stats.rejected}</div></div>
+      <div class="stat-grid-premium">
+        <div class="stat-card-new red-glass">
+          <div class="card-content">
+            <div class="card-label">TOTAL EVENTS</div>
+            <div class="card-value">${stats.total_events || 0}</div>
+            <div class="card-sub">Global event requests processed</div>
+          </div>
+          <div class="card-icon">📊</div>
+        </div>
+        
+        <div class="stat-card-new green-glass">
+          <div class="card-content">
+            <div class="card-label">APPROVED</div>
+            <div class="card-value">${stats.approved || 0}</div>
+            <div class="card-sub">Finalized hall bookings</div>
+          </div>
+          <div class="card-icon">✅</div>
+        </div>
+
+        <div class="stat-card-new gold-glass">
+          <div class="card-content">
+            <div class="card-label">PENDING</div>
+            <div class="card-value">${stats.pending || 0}</div>
+            <div class="card-sub">Awaiting administrative review</div>
+          </div>
+          <div class="card-icon">⏳</div>
+        </div>
+
+        <div class="stat-card-new crimson-glass">
+          <div class="card-content">
+            <div class="card-label">REJECTED</div>
+            <div class="card-value">${stats.rejected || 0}</div>
+            <div class="card-sub">Requests returned with notes</div>
+          </div>
+          <div class="card-icon">✕</div>
+        </div>
       </div>
     </div>`;
 }
@@ -2912,30 +3102,32 @@ function toggleSidebar() {
     }
     if (btn) btn.innerHTML = isExpanded ? '✕' : '☰';
   } else {
+    // Desktop: Sync main-wrap
     if (mw) {
-      if (!isExpanded) {
-        mw.classList.add('sidebar-collapsed');
-        mw.classList.remove('sidebar-expanded');
-        if (btn) btn.innerHTML = '☰';
-      } else {
-        mw.classList.remove('sidebar-collapsed');
-        mw.classList.add('sidebar-expanded');
-        if (btn) btn.innerHTML = '✕';
-      }
+      mw.classList.toggle('sidebar-expanded', isExpanded);
+      mw.classList.toggle('sidebar-collapsed', !isExpanded);
     }
+    if (btn) btn.innerHTML = isExpanded ? '✕' : '☰';
   }
 }
 
 function closeSidebar() {
   const sb = document.getElementById('sidebar');
+  const mw = document.querySelector('.main-wrap');
   const ov = document.getElementById('sidebarOverlay');
   const btn = document.getElementById('menuToggleBtn');
+
   if (sb) sb.classList.remove('expanded');
-  if (ov) {
-    ov.classList.remove('show');
-    document.body.style.overflow = '';
-  }
+  if (ov) ov.classList.remove('show');
+  document.body.style.overflow = '';
+  
   if (btn) btn.innerHTML = '☰';
+  
+  // Also sync main-wrap if on desktop
+  if (window.innerWidth > 768 && mw) {
+    mw.classList.remove('sidebar-expanded');
+    mw.classList.add('sidebar-collapsed');
+  }
 }
 function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
@@ -3026,36 +3218,33 @@ function applyEventFilter(gridId, role, query, statusFilter) {
   if (!grid) return;
   const sortVal = document.getElementById('sort_' + gridId)?.value || 'date-asc';
   const deptFilter = document.getElementById('dept_filter_' + gridId)?.value || 'all';
-  const cards = Array.from(grid.querySelectorAll('.event-card, .event-manage-card'));
+  const cards = Array.from(grid.querySelectorAll('.v4-classic-card'));
   let visible = 0;
   cards.forEach(card => {
-    const title = (card.querySelector('.event-title, .em-title')?.textContent || '').toLowerCase();
-    const meta = (card.querySelector('.event-meta, .em-meta')?.textContent || '').toLowerCase();
-    const schoolTags = Array.from(card.querySelectorAll('.em-school')).map(s => s.textContent.replace('🏛️', '').trim().toLowerCase());
+    const title = (card.querySelector('.v4-event-title')?.textContent || '').toLowerCase();
+    const meta = (card.querySelector('.v4-meta-grid')?.textContent || '').toLowerCase();
     const status = card.className.match(/status-(\S+)/)?.[1] || '';
 
     const matchQ = !query || title.includes(query) || meta.includes(query);
     const matchS = statusFilter === 'all' || status === statusFilter;
-    const matchD = deptFilter === 'all' || schoolTags.some(t => t.includes(deptFilter.toLowerCase()));
 
-    card.style.display = (matchQ && matchS && matchD) ? '' : 'none';
-    if (matchQ && matchS && matchD) visible++;
+    card.style.display = (matchQ && matchS) ? '' : 'none';
+    if (matchQ && matchS) visible++;
   });
   // Sort visible cards
   const visibleCards = cards.filter(c => c.style.display !== 'none');
   visibleCards.sort((a, b) => {
-    const da = a.querySelector('.event-meta-item, .em-meta-item')?.textContent?.trim() || '';
-    const db = b.querySelector('.event-meta-item, .em-meta-item')?.textContent?.trim() || '';
-    const ta = a.querySelector('.event-title, .em-title')?.textContent || '';
-    const tb = b.querySelector('.event-title, .em-title')?.textContent || '';
-    const dpa = (a.querySelector('.em-school') && a.querySelector('.em-school').textContent) || '';
-    const dpb = (b.querySelector('.em-school') && b.querySelector('.em-school').textContent) || '';
-    if (sortVal === 'date-asc') return da.localeCompare(db);
-    if (sortVal === 'date-desc') return db.localeCompare(da);
-    if (sortVal === 'dept-asc') {
-      const depCmp = dpa.localeCompare(dpb);
-      return depCmp !== 0 ? depCmp : da.localeCompare(db);
-    }
+    // Robust date sorting using hidden raw-date field
+    const dateStrA = a.querySelector('.raw-date')?.textContent || '1970-01-01';
+    const dateStrB = b.querySelector('.raw-date')?.textContent || '1970-01-01';
+    const da = new Date(dateStrA);
+    const db = new Date(dateStrB);
+    
+    const ta = a.querySelector('.v4-event-title')?.textContent || '';
+    const tb = b.querySelector('.v4-event-title')?.textContent || '';
+    
+    if (sortVal === 'date-asc') return da - db;
+    if (sortVal === 'date-desc') return db - da;
     if (sortVal === 'title') return ta.localeCompare(tb);
     return 0;
   });
@@ -3080,16 +3269,91 @@ function showConfirmModal(title, message, onConfirm) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = `
     <div style="text-align:center; padding:10px 0;">
-      <div style="font-size:1.1rem; color:var(--text); margin-bottom:24px; line-height:1.5">${message}</div>
+      <div style="font-size:0.9rem; color:#1e293b; font-weight:700; margin-bottom:16px;">${message}</div>
+      <div style="font-size:0.85rem; color:#64748b; margin-bottom:24px;">This action is permanent and cannot be reversed.</div>
       <div style="display:flex; gap:12px; max-width:400px; margin:0 auto">
-        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Dismiss</button>
-        <button class="btn btn-danger" style="flex:1" id="confirmOk">Confirm</button>
+        <button class="btn btn-outline" style="flex:1; border-radius:12px; font-weight:700" onclick="closeModal()">Dismiss</button>
+        <button class="btn btn-danger" style="flex:1; border-radius:12px; font-weight:700; position:relative" id="confirmOk">
+          <span id="confirmText">Confirm Action</span>
+          <div id="confirmSpinner" class="spinner-xs" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%)"></div>
+        </button>
       </div>
     </div>`;
   const btn = document.getElementById('confirmOk');
-  btn.onclick = () => { onConfirm(); closeModal(); };
+  const txt = document.getElementById('confirmText');
+  const spin = document.getElementById('confirmSpinner');
+  
+  btn.onclick = async () => { 
+    if (btn.disabled) return;
+    btn.disabled = true;
+    txt.style.opacity = '0';
+    spin.style.display = 'block';
+    
+    try {
+      await onConfirm(); 
+      closeModal(); 
+    } catch (err) {
+      showToast('Action Failed: ' + (err.message || 'System Error'), 'error');
+      btn.disabled = false;
+      txt.style.opacity = '1';
+      spin.style.display = 'none';
+    }
+  };
   openModal();
 }
-async function logout() { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/'; }
 
+/**
+ * Custom alternative to native prompt()
+ */
+function showPromptModal(title, message, placeholder, onSubmit) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = `
+    <div style="padding:10px 0;">
+      <div style="font-size:1rem; color:#1e293b; font-weight:600; margin-bottom:12px;">${message}</div>
+      <input type="text" id="promptInput" placeholder="${placeholder}" 
+             style="width:100%; padding:14px; border-radius:12px; border:1px solid #e2e8f0; font-family:inherit; font-size:1rem; margin-bottom:24px; outline:none; transition:border-color 0.2s"
+             onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='#e2e8f0'">
+      
+      <div style="display:flex; gap:12px; justify-content:flex-end">
+        <button class="btn btn-outline" style="min-width:100px; border-radius:12px" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" style="min-width:140px; border-radius:12px; position:relative" id="promptSubmit">
+          <span id="promptBtnText">Submit</span>
+          <div id="promptSpinner" class="spinner-xs" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%)"></div>
+        </button>
+      </div>
+    </div>`;
+  
+  const input = document.getElementById('promptInput');
+  const btn = document.getElementById('promptSubmit');
+  const txt = document.getElementById('promptBtnText');
+  const spin = document.getElementById('promptSpinner');
+
+  input.focus();
+
+  // Allow Enter key to submit
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') btn.click();
+  });
+
+  btn.onclick = async () => {
+    const val = input.value.trim();
+    if (!val) { showToast('Please enter a value', 'error'); return; }
+    
+    btn.disabled = true;
+    txt.style.opacity = '0';
+    spin.style.display = 'block';
+
+    try {
+      await onSubmit(val);
+      closeModal();
+    } catch (err) {
+      showToast('Submit Failed: ' + (err.message || 'Error'), 'error');
+      btn.disabled = false;
+      txt.style.opacity = '1';
+      spin.style.display = 'none';
+    }
+  };
+  
+  openModal();
+}
 init();

@@ -26,8 +26,7 @@
       "B.Com. Computer Applications (CA)",
       "B.Com. Business Analytics (BA)",
       "B.Com. E-Commerce (E-Com)",
-      "B.Com. Information Technology (IT)",
-      "bcom adf"
+      "B.Com. Information Technology (IT)"
     ],
     "School of Intelligent Systems & Data Science": [
       "B.Sc. Computer Science with Data Analytics (CSDA)",
@@ -103,6 +102,22 @@
       "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
       "role": "booker",
       "email": "naveenrajak784@gmail.com"
+    },
+    {
+      "id": "u6",
+      "name": "Pixes Club Lead",
+      "username": "pixesclub",
+      "password": "7f1a5869fff17fba42a18a6b3331e800450a7318a9436b740349454cb1820beb",
+      "role": "pixesclub",
+      "email": ""
+    },
+    {
+      "id": "u7",
+      "name": "Fine Arts Lead",
+      "username": "fineartsclub",
+      "password": "e5ea9965232d1d5b943c52b34b4c3977e01960349b80ea3856a2f0f0af7d5b27",
+      "role": "fineartsclub",
+      "email": ""
     }
   ],
   "halls": [
@@ -250,182 +265,252 @@
       "id": "it01",
       "name": "Hand Mic",
       "dept": "it",
-      "stock_qty": 50,
+      "stock_qty": 9999,
       "in_use": 13
     },
     {
       "id": "it02",
       "name": "Podium Mic",
       "dept": "it",
-      "stock_qty": 5,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it03",
       "name": "Speakers",
       "dept": "it",
-      "stock_qty": 8,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it04",
       "name": "Laptop",
       "dept": "it",
-      "stock_qty": 20,
+      "stock_qty": 9999,
       "in_use": 8
     },
     {
       "id": "it05",
       "name": "Projector",
       "dept": "it",
-      "stock_qty": 10,
+      "stock_qty": 9999,
       "in_use": 2
     },
     {
       "id": "it06",
       "name": "Presenter",
       "dept": "it",
-      "stock_qty": 8,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it07",
       "name": "Podium",
       "dept": "it",
-      "stock_qty": 4,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it08",
       "name": "Photo Camera",
       "dept": "it",
-      "stock_qty": 3,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it09",
       "name": "Video Camera",
       "dept": "it",
-      "stock_qty": 3,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "it10",
       "name": "White Board",
       "dept": "it",
-      "stock_qty": 10,
+      "stock_qty": 9999,
       "in_use": 6
     },
     {
       "id": "rc01",
       "name": "Lamp",
       "dept": "reception",
-      "stock_qty": 20,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc02",
       "name": "Paneer Sprinkler",
       "dept": "reception",
-      "stock_qty": 15,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc03",
       "name": "Tray",
       "dept": "reception",
-      "stock_qty": 20,
+      "stock_qty": 9999,
       "in_use": 10
     },
     {
       "id": "rc04",
       "name": "Silver Bowls",
       "dept": "reception",
-      "stock_qty": 30,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc05",
       "name": "Table Cloth",
       "dept": "reception",
-      "stock_qty": 25,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc06",
       "name": "Plug Card",
       "dept": "reception",
-      "stock_qty": 15,
+      "stock_qty": 9999,
       "in_use": 10
     },
     {
       "id": "rc07",
       "name": "L-Folder",
       "dept": "reception",
-      "stock_qty": 50,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc08",
       "name": "Water Bottle",
       "dept": "reception",
-      "stock_qty": 200,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc09",
       "name": "Hall Chairs",
       "dept": "reception",
-      "stock_qty": 500,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc10",
       "name": "Stage Table",
       "dept": "reception",
-      "stock_qty": 10,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc11",
       "name": "Stage Chair",
       "dept": "reception",
-      "stock_qty": 30,
+      "stock_qty": 9999,
       "in_use": 10
     },
     {
       "id": "rc12",
       "name": "Registration Table",
       "dept": "reception",
-      "stock_qty": 10,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc13",
       "name": "Registration Chair",
       "dept": "reception",
-      "stock_qty": 20,
-      "in_use": 10
+      "stock_qty": 9999,
+      "in_use": 0
     },
     {
       "id": "rc14",
       "name": "Reception Table",
       "dept": "reception",
-      "stock_qty": 8,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc15",
       "name": "Refreshment Table",
       "dept": "reception",
-      "stock_qty": 8,
+      "stock_qty": 9999,
       "in_use": 0
     },
     {
       "id": "rc16",
       "name": "T-Poy",
       "dept": "reception",
-      "stock_qty": 15,
+      "stock_qty": 9999,
+      "in_use": 0
+    },
+    {
+      "id": "px01",
+      "name": "DSLR Camera",
+      "dept": "pixesclub",
+      "stock_qty": 5,
+      "in_use": 0
+    },
+    {
+      "id": "px02",
+      "name": "Go Pro Camera",
+      "dept": "pixesclub",
+      "stock_qty": 3,
+      "in_use": 0
+    },
+    {
+      "id": "px03",
+      "name": "Drone",
+      "dept": "pixesclub",
+      "stock_qty": 2,
+      "in_use": 0
+    },
+    {
+      "id": "px04",
+      "name": "Camera Tripod",
+      "dept": "pixesclub",
+      "stock_qty": 8,
+      "in_use": 0
+    },
+    {
+      "id": "px05",
+      "name": "Photo Printer",
+      "dept": "pixesclub",
+      "stock_qty": 2,
+      "in_use": 0
+    },
+    {
+      "id": "fa01",
+      "name": "Backdrop Stand",
+      "dept": "fineartsclub",
+      "stock_qty": 4,
+      "in_use": 0
+    },
+    {
+      "id": "fa02",
+      "name": "Costume Set",
+      "dept": "fineartsclub",
+      "stock_qty": 10,
+      "in_use": 0
+    },
+    {
+      "id": "fa03",
+      "name": "Stage Lights",
+      "dept": "fineartsclub",
+      "stock_qty": 12,
+      "in_use": 0
+    },
+    {
+      "id": "fa04",
+      "name": "Sound System",
+      "dept": "fineartsclub",
+      "stock_qty": 3,
+      "in_use": 0
+    },
+    {
+      "id": "fa05",
+      "name": "Dance Props Set",
+      "dept": "fineartsclub",
+      "stock_qty": 5,
       "in_use": 0
     }
   ],
@@ -541,8 +626,9 @@
           "requested_qty": 10,
           "allocated_qty": 10,
           "dept_approved": true,
-          "returned": false,
-          "dept_rejected": false
+          "returned": true,
+          "dept_rejected": false,
+          "returned_qty": 10
         }
       ],
       "created_by": "u2",
@@ -1972,6 +2058,81 @@
       "created_by": "u2",
       "created_by_name": "Dr. Priya",
       "created_at": "2026-04-06T15:18:43.988632",
+      "principal_decision": null,
+      "principal_note": ""
+    },
+    {
+      "id": "e57f61c2a",
+      "title": "TEDXX",
+      "event_type": "Conference",
+      "date": "2026-04-18",
+      "days": 1,
+      "time_slot": "9:00 AM - 12:00 PM",
+      "hall_id": "h_sem2",
+      "hall_name": "Seminar Hall 2",
+      "description": "CONFERENCE",
+      "budget_id": "BGT-123",
+      "coordinator": "DEVE",
+      "coordinator_phone": "7945612301",
+      "resource_person": "DEVI",
+      "expected_count": 500,
+      "departments": [
+        {
+          "school": "School of Computing Science",
+          "department": "B.Sc. Computer Science (CS)"
+        },
+        {
+          "school": "School of Fashion",
+          "department": "B.Sc. Costume Design and Fashion (CDF)"
+        }
+      ],
+      "has_intro_video": false,
+      "has_dance": true,
+      "has_photos": true,
+      "has_video": true,
+      "special_requirements": "CHIEF GUEST INTRO DANCE ",
+      "agenda_path": "/static/uploads/a249e494fbf94dfb90e32bbbb384769d_df8fe963.docx",
+      "requested_items": [
+        {
+          "item_id": "it01",
+          "item_name": "Hand Mic",
+          "dept": "it",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "it10",
+          "item_name": "White Board",
+          "dept": "it",
+          "requested_qty": 1,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc01",
+          "item_name": "Lamp",
+          "dept": "reception",
+          "requested_qty": 10,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        },
+        {
+          "item_id": "rc16",
+          "item_name": "T-Poy",
+          "dept": "reception",
+          "requested_qty": 14,
+          "allocated_qty": 0,
+          "dept_approved": false,
+          "returned": false
+        }
+      ],
+      "created_by": "u2",
+      "created_by_name": "Dr. Priya",
+      "created_at": "2026-04-17T00:16:01.110842",
       "principal_decision": null,
       "principal_note": ""
     }

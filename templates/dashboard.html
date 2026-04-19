@@ -16,31 +16,34 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon-wrap">
-        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="KPRCAS">
+        <img src="https://image2url.com/r2/default/images/1774243478274-c1b09675-5ce9-40cd-a741-5d1a37595866.jpeg" alt="Logo">
       </div>
       <div class="brand-stack">
         <span class="brand-kprcas">KPRCAS</span>
-        <span class="brand-hms">HMS</span>
+        <span class="brand-hms hms-premium">HMS</span>
       </div>
     </div>
     <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-footer">
       <div class="user-info" id="userInfo"></div>
-      <button class="btn-logout" onclick="logout()">↩ <span>Sign Out</span></button>
+      <button class="logout-btn" onclick="logout()">
+        <span class="logout-icon">🚪</span>
+        <span>Sign Out</span>
+      </button>
     </div>
   </aside>
 
   <div class="main-wrap">
     <header class="topbar">
-      <div class="topbar-left">
-        <button class="menu-toggle" id="menuToggleBtn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
-        <div class="topbar-page-label" id="topbarTitle">Dashboard</div>
+      <button class="menu-toggle" id="menuToggleBtn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+      
+      <div class="topbar-center">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
       </div>
 
       <div class="topbar-right-group">
-        <div class="topbar-date-pill" id="topbarDate"></div>
-        <div class="topbar-role-badge-pill" id="topbarRoleBadge">ADMIN</div>
-        <div class="lock-badge-pill" id="lockBadge" style="display:none">🔒 Locked</div>
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="lock-badge" id="lockBadge" style="display:none">🔒 Locked</div>
       </div>
     </header>
 
