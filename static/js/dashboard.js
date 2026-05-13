@@ -1,11 +1,12 @@
 // ─── STATE ───────────────────────────────────────────────────────────────────
+console.log("dashboard.js v1.2.1 loaded");
 let currentUser = null;
 let settings = {};
 let currentPage = null;
 function esc(s) { return s ? s.toString().replace(/'/g, "&#39;").replace(/"/g, "&quot;") : ""; }
 let eventPageState = { 'all-events': 1, 'pending-events': 1, 'manage-users': 1, 'manage-halls': 1, 'manage-inventory': 1, 'my-events': 1, 'club-requests': 1, 'dept-inventory': 1, 'dept-returns': 1 };
 let eventFilters = {}; // gridId -> { query, status, dept, sort }
-const EVENTS_PER_PAGE = 12;
+const EVENTS_PER_PAGE = 16;
 const LIST_PER_PAGE = 10;
 
 // ─── DOUBLE-CLICK PREVENTION ──────────────────────────────────────────────────
@@ -43,7 +44,12 @@ async function init() {
     startNotificationPolling();
   } catch (e) {
     console.error("Initialization failed:", e);
-    window.location.href = '/';
+    document.body.innerHTML = `<div style="padding:40px;color:red;font-family:sans-serif;">
+      <h1>Dashboard Initialization Failed</h1>
+      <p>Error: ${e.message}</p>
+      <pre>${e.stack}</pre>
+      <button onclick="window.location.href='/'">Go back to login</button>
+    </div>`;
   }
 }
 
@@ -109,6 +115,7 @@ function getNavItems() {
   if (role === 'booker') return [
     { id: 'my-events', icon: '🗓️', label: 'My Bookings' },
     { id: 'new-event', icon: '📝', label: 'New Booking' },
+    { id: 'hall-availability', icon: '🔍', label: 'Hall Availability' },
     { id: 'reports', icon: '📊', label: 'Reports' },
   ];
   if (role === 'it') return [
@@ -152,7 +159,7 @@ function navigateTo(page) {
     'rec-requests': 'Reception Requests', 'rec-inventory': 'Institutional Inventory', 'rec-returns': 'Equipment Returns',
     'pending-events': 'Authorization Pending',
     'club-requests': 'Club Activity Hub', 'club-inventory': 'Club Asset Registry', 'club-returns': 'Club Returns',
-    'manage-schools': 'School',
+    'hall-availability': 'Venue Availability Check',
   };
   document.getElementById('topbarTitle').textContent = titles[page] || page;
   document.getElementById('pageContent').innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Loading…</span></div>';
@@ -178,6 +185,7 @@ function navigateTo(page) {
     'club-requests': () => renderClubRequests(currentUser.role),
     'club-inventory': () => renderDeptInventory(currentUser.role),
     'club-returns': () => renderReturns(currentUser.role),
+    'hall-availability': renderHallAvailability,
   };
   if (routes[page]) routes[page]();
 }
@@ -267,7 +275,7 @@ function eventCard(e, role) {
   const avatarLetter = coordinatorName.charAt(0).toUpperCase();
 
   return `
-    <div class="luxury-event-card ${luxuryClass} status-${e.status}" 
+    <div class="luxury-event-card ${luxuryClass} status-${e.status} ${role !== 'booker' && role !== 'admin' && role !== 'principal' ? 'luxury-card-dept' : ''}" 
          data-dept="${(e.departments || []).map(d => (d.school || d.department || '').toLowerCase()).join(',')}"
          onclick="openPremiumEventDetails('${esc(e.id)}')" style="cursor:pointer">
       <div class="luxury-card-corner"></div>
@@ -469,13 +477,17 @@ async function openPremiumEventDetails(eid) {
 
   document.getElementById('modalBody').innerHTML = `
     <div class="modal-premium-dossier" id="eventDossier">
-      <div class="dossier-header ${statusClass}">
-        <div class="dossier-header-top">
-          <div class="dossier-id">REF# ${e.id}</div>
-          <div class="dossier-status-badge">${e.status.replace(/_/g, ' ').toUpperCase()}</div>
+      <div class="dossier-header ${statusClass}" style="background: linear-gradient(135deg, #1e293b, #334155); color: white; padding: 32px; border-radius: 28px 28px 0 0; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+        <div class="dossier-header-top" style="margin-bottom: 20px;">
+          <div class="dossier-id" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;">REF# ${e.id}</div>
+          <div class="dossier-status-badge" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">${e.status.replace(/_/g, ' ').toUpperCase()}</div>
         </div>
-        <h2 class="dossier-title">${esc(e.title)}</h2>
-        <div class="dossier-coordinator"><span class="label">COORDINATOR</span> ${esc(coordinatorName)}</div>
+        <h2 class="dossier-title" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; color: white;">${esc(e.title)}</h2>
+        <div class="dossier-coordinator" style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.75rem; font-weight: 800; opacity: 0.6; letter-spacing: 0.05em;">COORDINATOR</span>
+          <span style="font-weight: 700;">${esc(coordinatorName)}</span>
+        </div>
       </div>
 
       <div class="dossier-body">
@@ -539,26 +551,35 @@ async function openPremiumEventDetails(eid) {
           </table>
         </div>
 
-        <div class="dossier-premium-block" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
-          <div class="dossier-block-header" style="background: rgba(255,255,255,0.5); border-color: #bfdbfe;">
-            <h4 style="color: #1e40af;">📎 Uploaded Proposal File</h4>
+        <div class="dossier-premium-block" style="background: #f8fafc; border-style: dashed; border-width: 2px;">
+          <div class="dossier-block-header" style="background: transparent; border: none; padding-bottom: 0;">
+            <h4 style="color: #64748b;">📎 Agenda Document Preview</h4>
           </div>
-          <div style="padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-            <div style="display: flex; align-items: center; gap: 16px;">
-              <div style="width: 54px; height: 54px; background: #fff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #bfdbfe;">
-                ${e.agenda_path?.endsWith('.pdf') ? '📕' : '📄'}
-              </div>
-              <div>
-                <div style="font-weight: 800; color: #1e3a8a; font-size: 0.95rem;">Original Event Agenda</div>
-                <div style="font-size: 0.78rem; color: #60a5fa; font-weight: 600; margin-top: 2px;">Institutional Document Reference</div>
-              </div>
-            </div>
+          <div style="padding: 24px;">
             ${e.agenda_path ? `
-              <a href="${e.agenda_path}" target="_blank" class="luxury-action-btn luxury-btn-success" style="text-decoration:none; display:flex; align-items:center; gap:8px; padding: 12px 24px; background: #2563eb; border: none;">
-                <span>View Original Copy</span>
-              </a>
+              <div style="display: flex; align-items: center; justify-content: space-between; background: white; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                  <div style="width: 64px; height: 64px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid #bfdbfe; color: #2563eb;">
+                    ${e.agenda_path.toLowerCase().endsWith('.pdf') ? '📕' : '📄'}
+                  </div>
+                  <div>
+                    <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${e.title}_Agenda.pdf</div>
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; margin-top: 4px;">Institutional Verified Document</div>
+                  </div>
+                </div>
+                <a href="${e.agenda_path}" target="_blank" class="btn btn-primary" style="text-decoration:none; display:flex; align-items:center; gap:8px; padding: 12px 24px; border-radius: 10px; font-weight: 800;">
+                  <span>Open Full View</span> ↗
+                </a>
+              </div>
+              <div style="margin-top: 16px; padding: 12px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; font-size: 0.75rem; color: #b45309; text-align: center; font-weight: 600;">
+                🔒 This is a secure institutional document. Access is logged.
+              </div>
             ` : `
-              <div style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">No file attached</div>
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: white; border-radius: 16px; border: 1px dashed #e2e8f0; color: #94a3b8;">
+                <div style="font-size: 2.5rem; margin-bottom: 12px;">📁</div>
+                <div style="font-weight: 700; font-size: 0.9rem;">No Agenda Document Uploaded</div>
+                <div style="font-size: 0.75rem; margin-top: 4px;">Coordinator has not attached any file.</div>
+              </div>
             `}
           </div>
         </div>

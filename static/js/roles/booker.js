@@ -323,6 +323,23 @@ async function renderNewEvent() {
   </div>
   `;
   syncClubSteps();
+
+  // PRE-FILL FROM AVAILABILITY CHECK
+  const pfHall = sessionStorage.getItem('prefill_hall_id');
+  const pfDate = sessionStorage.getItem('prefill_date');
+  if (pfHall && pfDate) {
+    const dInp = document.getElementById('evDate');
+    if (dInp) dInp.value = pfDate;
+    
+    const h = _allHalls.find(x => x.id == pfHall);
+    if (h) {
+      selectHall(h.id, h.name, h.capacity);
+    }
+    
+    sessionStorage.removeItem('prefill_hall_id');
+    sessionStorage.removeItem('prefill_date');
+    showToast('Details pre-filled from availability check! ⚡', 'info');
+  }
 }
 
 
@@ -636,6 +653,16 @@ function onCountChange(val) {
           <div style="font-size:0.85rem;margin-top:2px">Your selection (Cap: ${totalSelectedCap}) is sufficient for ${count} attendees.</div>
         </div>
       </div>`;
+  } else if (totalSelectedCap > 0) {
+    banner.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="background:rgba(255,255,255,0.2);padding:8px;border-radius:10px;font-size:1.2rem">⚠️</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em">Insufficiency Detected</div>
+          <div style="font-size:0.85rem;margin-top:2px">Please book another hall or add more venues. (Current: ${totalSelectedCap} / Req: ${count})</div>
+        </div>
+      </div>`;
   } else if (suitableHalls.length > 0) {
     banner.style.background = 'linear-gradient(135deg, #6366f1, #4f46e5)';
     banner.innerHTML = `
@@ -764,4 +791,233 @@ async function submitNewEvent() {
   } finally {
     releaseLock('submitNewEvent');
   }
+}
+
+// ─── HALL AVAILABILITY FEATURE ────────────────────────────────────────────────
+async function renderHallAvailability() {
+  const halls = await api('/api/halls');
+  const pc = document.getElementById('pageContent');
+  
+  pc.innerHTML = `
+    <div class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">🔍 Venue Availability Check</div>
+          <div class="section-sub">Select a hall to check its availability calendar</div>
+        </div>
+      </div>
+      
+      <div class="cards-grid" style="grid-template-columns: repeat(4, 1fr);">
+        ${halls.map(h => {
+          const typeInfo = getHallTypeLabel(h);
+          return `
+            <div class="luxury-history-card inst-animate" onclick="selectHallForAvailability('${esc(h.id)}')" style="cursor:pointer; padding:0; overflow:hidden; border:none;">
+              <div style="height:140px; background:url('${getHallImage(h)}') center/cover; position:relative;">
+                <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);"></div>
+                <div style="position:absolute; bottom:12px; left:12px;">
+                  <div style="color:white; font-weight:900; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.5);">${esc(h.name)}</div>
+                  <div style="color:rgba(255,255,255,0.8); font-size:0.75rem; font-weight:600;">${esc(h.type)}</div>
+                </div>
+              </div>
+              <div style="padding:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <span style="font-size:0.8rem; font-weight:700; color:#64748b;">👥 Capacity: ${h.capacity}</span>
+                  <span style="padding:4px 8px; border-radius:6px; font-size:0.7rem; font-weight:800; background:${typeInfo.bg}; color:${typeInfo.color};">${typeInfo.label}</span>
+                </div>
+                <button class="btn btn-primary" style="width:100%; border-radius:10px; font-size:0.8rem;">Check Availability</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+async function selectHallForAvailability(hallId) {
+  const halls = await api('/api/halls');
+  const hall = halls.find(h => h.id == hallId);
+  if (!hall) return;
+
+  const pc = document.getElementById('pageContent');
+  pc.innerHTML = `
+    <div class="section">
+      <div class="section-header">
+        <button class="btn-back" onclick="renderHallAvailability()">← Back to Halls</button>
+        <div>
+          <div class="section-title">${esc(hall.name)} Availability</div>
+          <div class="section-sub">Select date range to check booking status</div>
+        </div>
+      </div>
+
+      <div class="luxury-history-card" style="max-width: 600px; margin: 0 auto; padding: 32px;">
+        <div style="display: flex; gap: 24px; margin-bottom: 32px;">
+          <label style="flex: 1; cursor: pointer;">
+            <input type="radio" name="dateMode" value="single" checked onchange="toggleDateMode('single')" style="display:none">
+            <div id="modeSingle" style="padding:16px; border-radius:12px; border:2px solid var(--accent); text-align:center; transition:all 0.2s; background:var(--accent-lt);">
+              <div style="font-size:1.5rem; margin-bottom:4px;">📅</div>
+              <div style="font-weight:800; color:var(--accent);">Single Day</div>
+            </div>
+          </label>
+          <label style="flex: 1; cursor: pointer;">
+            <input type="radio" name="dateMode" value="multiple" onchange="toggleDateMode('multiple')" style="display:none">
+            <div id="modeMultiple" style="padding:16px; border-radius:12px; border:2px solid #e2e8f0; text-align:center; transition:all 0.2s;">
+              <div style="font-size:1.5rem; margin-bottom:4px;">🗓️</div>
+              <div style="font-weight:800; color:#64748b;">Multiple Days</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="singleDateBox">
+          <label style="display:block; font-size:0.8rem; font-weight:800; color:#64748b; margin-bottom:8px;">SELECT DATE</label>
+          <input type="date" id="availSingleDate" class="filter-search" style="width:100%; padding:14px; border-radius:12px; font-size:1rem;">
+        </div>
+
+        <div id="multipleDateBox" style="display:none; gap:16px;">
+          <div style="flex:1">
+            <label style="display:block; font-size:0.8rem; font-weight:800; color:#64748b; margin-bottom:8px;">START DATE</label>
+            <input type="date" id="availStartDate" class="filter-search" style="width:100%; padding:14px; border-radius:12px;">
+          </div>
+          <div style="flex:1">
+            <label style="display:block; font-size:0.8rem; font-weight:800; color:#64748b; margin-bottom:8px;">END DATE</label>
+            <input type="date" id="availEndDate" class="filter-search" style="width:100%; padding:14px; border-radius:12px;">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="performAvailabilityCheck('${esc(hallId)}')" style="width:100%; margin-top:32px; padding:16px; font-size:1rem; border-radius:14px;">
+          Search Availability
+        </button>
+      </div>
+
+      <div id="availabilityResults" style="margin-top:40px;"></div>
+    </div>
+  `;
+}
+
+function toggleDateMode(mode) {
+  const single = document.getElementById('singleDateBox');
+  const multi = document.getElementById('multipleDateBox');
+  const mSingle = document.getElementById('modeSingle');
+  const mMulti = document.getElementById('modeMultiple');
+
+  if (mode === 'single') {
+    single.style.display = 'block';
+    multi.style.display = 'none';
+    mSingle.style.borderColor = 'var(--accent)';
+    mSingle.style.background = 'var(--accent-lt)';
+    mSingle.querySelector('div:last-child').style.color = 'var(--accent)';
+    mMulti.style.borderColor = '#e2e8f0';
+    mMulti.style.background = 'transparent';
+    mMulti.querySelector('div:last-child').style.color = '#64748b';
+  } else {
+    single.style.display = 'none';
+    multi.style.display = 'flex';
+    mMulti.style.borderColor = 'var(--accent)';
+    mMulti.style.background = 'var(--accent-lt)';
+    mMulti.querySelector('div:last-child').style.color = 'var(--accent)';
+    mSingle.style.borderColor = '#e2e8f0';
+    mSingle.style.background = 'transparent';
+    mSingle.querySelector('div:last-child').style.color = '#64748b';
+  }
+}
+
+async function performAvailabilityCheck(hallId) {
+  const mode = document.querySelector('input[name="dateMode"]:checked').value;
+  let dates = [];
+
+  if (mode === 'single') {
+    const d = v('availSingleDate');
+    if (!d) { showToast('Please select a date', 'error'); return; }
+    dates = [d];
+  } else {
+    const start = v('availStartDate');
+    const end = v('availEndDate');
+    if (!start || !end) { showToast('Please select start and end dates', 'error'); return; }
+    if (end < start) { showToast('End date cannot be before start date', 'error'); return; }
+    
+    let curr = new Date(start);
+    const stop = new Date(end);
+    while (curr <= stop) {
+      dates.push(curr.toISOString().split('T')[0]);
+      curr.setDate(curr.getDate() + 1);
+    }
+  }
+
+  const resultsDiv = document.getElementById('availabilityResults');
+  resultsDiv.innerHTML = '<div class="loading-wrap"><div class="spinner"></div><span>Checking Database…</span></div>';
+
+  try {
+    const allEvents = await api('/api/events');
+    const halls = await api('/api/halls');
+    const hall = halls.find(h => h.id == hallId);
+    
+    let html = `
+      <div class="section-title" style="margin-bottom:20px;">Results for ${esc(hall.name)}</div>
+      <div class="cards-grid" style="grid-template-columns: repeat(1, 1fr); gap:16px;">
+    `;
+
+    dates.forEach(date => {
+      const bookedEvents = allEvents.filter(e => e.hall_id == hallId && e.date === date && e.status !== 'rejected' && e.status !== 'cancelled');
+      
+      if (bookedEvents.length > 0) {
+        html += `
+          <div class="luxury-history-card" style="border-left:6px solid #ef4444; padding: 24px;">
+            <div style="display:flex; align-items:center; gap:20px; margin-bottom: 20px;">
+              <div style="padding:10px 16px; background:#fee2e2; border-radius:12px; text-align:center; min-width:80px;">
+                <div style="font-size:0.7rem; font-weight:800; color:#ef4444;">${new Date(date).toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</div>
+                <div style="font-size:1.5rem; font-weight:900; color:#b91c1c;">${new Date(date).getDate()}</div>
+              </div>
+              <div>
+                <div style="font-weight:800; font-size:1.2rem; color:#1e293b;">Occupied Venue</div>
+                <div style="font-size:0.85rem; color:#ef4444; font-weight:700;">${bookedEvents.length} booking(s) found for this date.</div>
+              </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              ${bookedEvents.map(e => `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:800; color:#334155; font-size:1rem;">${esc(e.title)}</div>
+                    <div style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
+                      <span>⏰ ${esc(e.time_slot)}</span>
+                      <span>🏢 ${esc(e.departments?.[0]?.department || '—')}</span>
+                      <span>👤 ${esc(e.coordinator || e.created_by_name)}</span>
+                      <span>📞 ${esc(e.phone || '—')}</span>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="openPremiumEventDetails('${e.id}')">View</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="luxury-history-card" style="display:flex; align-items:center; justify-content:space-between; border-left:6px solid #10b981; padding: 24px;">
+            <div style="display:flex; align-items:center; gap:20px;">
+              <div style="padding:10px 16px; background:#f0fdf4; border-radius:12px; text-align:center; min-width:80px;">
+                <div style="font-size:0.7rem; font-weight:800; color:#10b981;">${new Date(date).toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</div>
+                <div style="font-size:1.5rem; font-weight:900; color:#15803d;">${new Date(date).getDate()}</div>
+              </div>
+              <div>
+                <div style="font-weight:800; font-size:1.1rem; color:#1e293b;">Available for Booking</div>
+                <div style="font-size:0.8rem; color:#64748b; font-weight:600; margin-top:4px;">This venue is free for the selected date.</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="quickBookHall('${hallId}', '${date}')">Book Now</button>
+          </div>
+        `;
+      }
+    });
+
+    html += `</div>`;
+    resultsDiv.innerHTML = html;
+  } catch (err) {
+    showToast('Error checking availability: ' + err.message, 'error');
+  }
+}
+
+function quickBookHall(hallId, date) {
+  sessionStorage.setItem('prefill_hall_id', hallId);
+  sessionStorage.setItem('prefill_date', date);
+  navigateTo('new-event');
 }

@@ -65,7 +65,7 @@ async function renderDeptInventory(dept) {
           <button class="btn btn-primary" onclick="openAddDeptInventory('${dept}')">➕ Add Item</button>
         </div>
       </div>
-      <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+      <div class="cards-grid" style="grid-template-columns: repeat(4, 1fr);">
         ${paginated.map((i, idx) => {
     const isLowStock = (i.stock_qty - i.in_use) <= 5;
     return `

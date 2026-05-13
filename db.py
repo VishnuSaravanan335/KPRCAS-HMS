@@ -1,6 +1,7 @@
 try:
     import mysql.connector
     from mysql.connector.errors import Error
+    from typing import List, Dict, Any, Optional, Tuple
 except ImportError:
     print("CRITICAL ERROR: mysql-connector-python not installed. Run 'pip install mysql-connector-python'")
     # Define dummy Error to prevent further crashes
@@ -23,7 +24,7 @@ def get_connection():
         print(f"Error connecting to MySQL: {e}")
         return None
 
-def fetch_all(query, params=None):
+def fetch_all(query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Dict[str, Any]]:
     """Executes a query and returns a list of dictionaries."""
     conn = get_connection()
     if not conn:
@@ -42,7 +43,7 @@ def fetch_all(query, params=None):
             cursor.close()
             conn.close()
 
-def fetch_one(query, params=None):
+def fetch_one(query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[Dict[str, Any]]:
     """Executes a query and returns a single dictionary or None."""
     conn = get_connection()
     if not conn:

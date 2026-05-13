@@ -7,13 +7,14 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, TypeVar, c
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import db
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = 'kprhub_secret_2024'
 
 # ─── DB COLUMN CHECK ────────────────────────────────────────────────────────
 try:
-    import db as _db
+    _db = db
     # Check if column exists
     res = _db.fetch_one("SHOW COLUMNS FROM events LIKE 'agenda_path'")
     if not res:
@@ -114,15 +115,15 @@ def send_notification_with_fallback(recipients: List[str], subject: str, html: s
 
 def send_event_notification(event_data):
     """Sends KPRCAS HMS official templates (1, 2, 3) on submission."""
-    import db as _db
+    _db = db
     data = load_data()
     admins = [u['email'] for u in data.get('users', []) if u['role'] == 'admin' and u.get('email')]
     principal_email = next((u['email'] for u in data.get('users', []) if u['role'] == 'principal' and u.get('email')), None)
     it_email = IT_MAIL_USERNAME
     rec_email = REC_MAIL_USERNAME
     
-    # Get Booker Email
     booker_email = None
+    booker_name = "User"
     try:
         db_user = _db.fetch_one("SELECT email, name FROM users WHERE id = %s", (event_data.get('created_by'),))
         if db_user and db_user.get('email'):
@@ -251,12 +252,14 @@ def send_approval_notification(event_data):
 
 def send_rejection_notification(event_data):
     """Template 5: Booking Cancelled (only if Admin / Principal rejects)."""
-    import db as _db
+    _db = db
     booker_email = None
+    booker_name = "User"
     try:
         db_user = _db.fetch_one("SELECT email, name FROM users WHERE id = %s", (event_data.get('created_by'),))
-        booker_email = db_user['email']
-        booker_name = db_user.get('name', 'User')
+        if db_user:
+            booker_email = db_user.get('email')
+            booker_name = db_user.get('name', 'User')
     except: pass
     
     if not booker_email: return False
@@ -603,7 +606,7 @@ def roles_required(*roles: str) -> Callable[[Callable[..., Any]], Callable[..., 
         def decorated(*args: Any, **kwargs: Any) -> Any:
             if 'user_id' not in session:
                 return jsonify({"error": "Unauthorized"}), 401
-            import db
+            # import db removed
             user = db.fetch_one("SELECT role FROM users WHERE id = %s", (session['user_id'],))
             if not user or user['role'] not in roles:
                 return jsonify({"error": "Forbidden"}), 403
@@ -624,7 +627,7 @@ def dashboard() -> Response:
 # ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
 @app.route('/api/login', methods=['POST'])
-def login() -> Response:
+def login() -> RouteResp:
     d: JsonDict = get_request_json()
     username = d.get('username')
     password = d.get('password')
@@ -724,7 +727,7 @@ def update_hierarchy() -> Response:
 
 @app.route('/api/users', methods=['GET'])
 @roles_required('admin')
-def get_users() -> Response:
+def get_users() -> RouteResp:
     import db
     users = db.fetch_all("SELECT * FROM users")
     return jsonify([{k: v for k, v in u.items() if k != 'password'} for u in users])
@@ -774,6 +777,8 @@ def update_user(uid: str) -> RouteResp:
         db.execute_query("UPDATE users SET name=%s, role=%s, email=%s, username=%s WHERE id=%s", (name, role, email, username, uid))
         
     user = db.fetch_one("SELECT * FROM users WHERE id = %s", (uid,))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     return jsonify({k: v for k, v in user.items() if k != 'password'})
 
 @app.route('/api/users/<uid>', methods=['DELETE'])
@@ -1021,7 +1026,7 @@ def update_inventory(iid: str) -> RouteResp:
 
 @app.route('/api/inventory/<iid>', methods=['DELETE'])
 @roles_required('admin', 'it', 'reception', 'pixesclub', 'fineartsclub')
-def delete_inventory(iid: str) -> Response:
+def delete_inventory(iid: str) -> RouteResp:
     role = str(session.get('role', '')).lower().strip()
     import db
     item = db.fetch_one("SELECT * FROM inventory WHERE id = %s", (iid,))
@@ -1374,6 +1379,7 @@ def principal_review(eid: str) -> RouteResp:
     db.execute_query("UPDATE events SET principal_decision=%s, principal_note=%s WHERE id=%s", (decision, note, eid))
     
     event = get_full_event(eid)
+    if not event: return jsonify({"error": "Event consistency error"}), 404
     try:
         if decision == 'approved':
             send_approval_notification(event)
@@ -1445,9 +1451,9 @@ def mark_notifications_read() -> Response:
 def stats() -> Response:
     import db
     events = db.fetch_all("SELECT principal_decision FROM events")
-    users_count = db.fetch_one("SELECT COUNT(*) as c FROM users")['c']
-    halls_count = db.fetch_one("SELECT COUNT(*) as c FROM halls")['c']
-    inv_count = db.fetch_one("SELECT COUNT(*) as c FROM inventory")['c']
+    users_count = (db.fetch_one("SELECT COUNT(*) as c FROM users") or {'c': 0}).get('c', 0)
+    halls_count = (db.fetch_one("SELECT COUNT(*) as c FROM halls") or {'c': 0}).get('c', 0)
+    inv_count = (db.fetch_one("SELECT COUNT(*) as c FROM inventory") or {'c': 0}).get('c', 0)
     
     return jsonify({
         "total_events":    len(events),
